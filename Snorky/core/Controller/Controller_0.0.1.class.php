@@ -7,7 +7,6 @@
  */
 
 
-
 /**
  * Description of Controller
  *
@@ -30,6 +29,9 @@ class Controller {
     	// Init templates
     	$this->instanceRegister->put("template", new Templater());
 
+        $this->establishDBConnection();
+
+
     }
 
     private function establishDBConnection() {
@@ -37,12 +39,12 @@ class Controller {
     	$configuration = $this->instanceRegister->get("configurator");
 
     	dibi::connect(array(
-		    'driver'   => 'mysql',
-		    'host'     => 'localhost',
-		    'username' => 'root',
-		    'password' => '***',
-		    'database' => 'test',
-		    'charset'  => 'utf8',
+		    "driver"   => "mysql",
+		    "host"     => "localhost",
+		    "username" => "snorky",
+		    "password" => "LUHmh4XG",
+		    "database" => "snorky",
+		    "charset"  => "utf8"
 		));
     }
 }
