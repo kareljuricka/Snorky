@@ -6,31 +6,35 @@
  * and open the template in the editor.
  */
 
+
+
 /**
- * Description of Parser
+ * Description of Controller
  *
  * @author David & Karel
  */
 class Controller {
     
-    private $instance_register;
+    private $instanceRegister = null;
     	
     public function __construct() {
 
+    	$configurator = new Configurator($this->paths, $this->configFile);
+
     	// Init register of instance
-    	$this->instance_register = Register::getRegistry("instance");
+    	$this->instanceRegister = Register::getRegistry("instance");
 
     	// Init configurations
-    	$this->instance_register->put("configurator", new Configurator());
+    	$this->instanceRegister->put("configurator", $configurator);
 
     	// Init templates
-    	$this->instance_register->put("template", new Template());
+    	$this->instanceRegister->put("template", new Template());
 
     }
 
     private function establishDBConnection() {
 
-    	$configuration = $this->instance_register->get("configurator");
+    	$configuration = $this->instanceRegister->get("configurator");
 
     	dibi::connect(array(
 		    'driver'   => 'mysql',

@@ -15,15 +15,19 @@ define("__ROOT", $_SERVER ["HTTP_HOST"]."/" );
 
 class Autoloader {
     
-    public static $basedir = '';
+    public static $baseDir = '';
     public static $classLibDir = ''; 
-    public static $pluginDir = '';
     
-    
-    static public function loader($className) {
+    static public function libLoader($className) {
         
-        $filename = self::$basedir . self::$classLibDir .'/'.substr($className,  strrpos($className, '\\')+1). ".class.php";
+        //$filename = self::$basedir . self::$classLibDir .'/'.substr($className,  strrpos($className, '\\')+1). ".class.php";
         
+        $path = self::$baseDir . "/" . self::$classLibDir . "/" . $className . "/";
+
+        $latest_version = self::getLatestVersion($path);
+
+        $filename = self::$baseDir . "/" . self::$classLibDir . "/" . $className . "/" . $latest_version; 
+
         if (file_exists($filename)) {
             include($filename);
             if (class_exists($className)) {
@@ -32,31 +36,31 @@ class Autoloader {
         }
         return FALSE;
     }
-    
-    static public function pluginLloader($className){
-        $filename = self::$basedir . self::$pluginDir .'/'.substr($className,  strrpos($className, '\\')+1). ".class.php";
-      
-        if (file_exists($filename)) {
-            include($filename);
-            if (class_exists($className)) {
-                return TRUE;
+
+    private static function getLatestVersion($path) {
+        $return_array = array();
+        if ($handle = opendir($path)) {
+            while (false !== ($entry = readdir($handle))) {
+                if ($entry != "." && $entry != "..") {
+                    $return_array[] = $entry;
+                }
             }
+            closedir($handle);
         }
-        return FALSE;
+        usort($return_array, array("self", "compareVersions"));
+
+        return $return_array[0];
     }
-    
-    static public function corePluginLloader($className){
-        $filename = self::$basedir . 'corePlugins/'.substr($className,  strrpos($className, '\\')). ".class.php";
-       
-        if (file_exists($filename)) {
-            include($filename);
-            if (class_exists($className)) {
-                return TRUE;
-            }
-        }
-        return FALSE;
+
+    /** Version comparing
+     * @param string version
+     * @param string version
+     * @return int higher version
+     */
+    private static function compareVersions($a, $b){
+        return version_compare($b, $a);
     }
 }
+
+
 spl_autoload_register('\Snorky\Autoloader::loader');
-spl_autoload_register('\Cougar\Autoloader::pluginLloader');
-spl_autoload_register('\Cougar\Autoloader::corePluginLloader');
