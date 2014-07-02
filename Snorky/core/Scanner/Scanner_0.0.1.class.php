@@ -13,9 +13,12 @@
  * Class for lexical scanner of Snorky template language. Instance of this class is usually is called
  * from lexical anallyzer.
  */
+
+namespace Snorky;
+
 class Scanner {
     //put your code here
-    private $rowNumber = null;
+    private $rowNumber = 0;
     private $fileHandler = null;
     private $cachedString =null;
     
@@ -46,5 +49,85 @@ class Scanner {
         if(! ($this->fileHandler = fopen($file, "r"))){
              throw new Exception('Cannot open template file',0);
         }        
+    }
+    
+    public function getRow(){
+        return $this->rowNumber;
+    }
+    
+     /**
+     * This method get next token from file.
+     * @param bool $findNext - if this parametr is false, method get tokens between {: and :} tags. If is true method find next {: 
+      * ang get the first token. Default value is true.
+     * @throws Exception - If file is read to end, this execption is thrown
+     */
+    public function getToken(bool $findNext = true){
+        
+        if(strlen($this->cachedString) < 0){
+            if(!($this->cachedString = fgets($this->fileHandler))){
+                 throw new EndOfFile('End of file',1,NULL, NULL);
+            }
+            $this->rowNumber++;
+        }
+        
+        //find start token tag, and cut string to this start
+        if($findNext){
+            $helpString = ''; //store string which was remove from original file string until we found start tag, it is clasical hmtl, css, etc.. code
+            
+            do{
+                $pos = strpos($this->cachedString,"{:");
+                // start tag wasn't found, it reads next line from source file.
+                if(!$pos){
+                    //store string
+                    $helpString.= $this->cachedString;
+                    if(!($this->cachedString = fgets($this->fileHandler))){
+                        throw new EndOfFile('End of file',1,NULL, $helpString);
+                    }
+                    $this->rowNumber++;
+                }
+            }while(!$pos);
+            
+            $helpString.= substr($this->cachedString, $pos);
+            $this->cachedString = substr($this->cachedString, $pos+2);
+            
+            $token['token'] = "T_OPEN";
+            $token['match'] = $helpString;
+            
+            return $token; 
+            
+        }else{
+            // continues reading between start and end tag
+            //removing white spaces from start of source string
+            $this->cachedString = preg_replace(self::$_terminals['T_WHITESPACE'], '', $this->cachedString);
+            
+            //if string is empty, we need to load next line from file, and again is neccesary to remove whte spaces
+            while(strlen($this->cachedString) < 0){
+                if(!($this->cachedString = fgets($this->fileHandler))){
+                     throw new EndOfFile('End of file',1,NULL, NULL);
+                }
+                $this->rowNumber++;
+                $this->cachedString = preg_replace(self::$_terminals['T_WHITESPACE'], '', $this->cachedString);
+            }
+            
+            //find token, if token is found function returns with it otherwise it continues and throw exception
+            foreach(static::$_terminals as $pattern => $name) {
+                if(preg_match($pattern, $this->cachedString, $matches,PREG_OFFSET_CAPTURE )) {
+                    //set start of string to the end of matched result
+                    $this->cachedString = substr($this->cachedString, $matches[1]+strlen($matches[0]));
+                    return array(
+                        'match' => $matches[0],
+                        'token' => $name
+                    );
+                }
+            }
+ 
+            throw new LexError;
+        }
+        
+        
+    }// end public function getToken(bool $findNext = true)
+    
+    public function __destruct() {
+        fclose($this->fileHandler);
     }
 }
