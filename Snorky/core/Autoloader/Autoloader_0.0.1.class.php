@@ -21,7 +21,8 @@ class Autoloader {
     
     static public function coreLoader($className) {
 
-        $path = self::$baseDir . "/" . self::$classCoreDir . "/" . $className;
+        if (!is_dir($path = self::$baseDir . "/" . self::$classCoreDir . "/" . $className))
+            return false;
 
         $latest_version = self::getLatestVersion($path);
 
@@ -30,27 +31,28 @@ class Autoloader {
         if (file_exists($filename)) {
             include($filename);
             if (class_exists($className)) {
-                return TRUE;
+                return true;
             }
         }
-        return FALSE;
+        return false;
     }
 
     static public function libLoader($className) {
-
-        $path = self::$baseDir . "/" . self::$classLibDir . "/" . $className;
+        
+        if (!is_dir($path = self::$baseDir . "/" . self::$classLibDir . "/" . $className))
+            return false;
 
         $latest_version = self::getLatestVersion($path);
 
-        $filename = $path . "/" . $className . "/" . $latest_version . "/" . $className .  ".php";
+        $filename = $path . "/" . $latest_version . "/" . $className .  ".php";
 
         if (file_exists($filename)) {
             include($filename);
             if (class_exists($className)) {
-                return TRUE;
+                return true;
             }
         }
-        return FALSE;
+        return false;
 
     }
 
