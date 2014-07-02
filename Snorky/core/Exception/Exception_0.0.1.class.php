@@ -11,6 +11,6 @@
  *
  * @author David & Karel
  */
-class Configurator {
+class Exception {
     //put your code here
 }

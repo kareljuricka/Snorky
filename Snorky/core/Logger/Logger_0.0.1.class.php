@@ -7,10 +7,10 @@
  */
 
 /**
- * Description of Parser
+ * Description of Templater
  *
- * @author David & Karel
+ * @author David
  */
-class Configurator {
+class Logger {
     //put your code here
 }
