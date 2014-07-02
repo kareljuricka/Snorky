@@ -6,6 +6,10 @@
 
 		}
 
+		public function establishDatabaseConnection() {
+
+		}
+
 	}
 
 ?>
