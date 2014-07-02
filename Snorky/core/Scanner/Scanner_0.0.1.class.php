@@ -51,8 +51,24 @@ class Scanner {
         }        
     }
     
+    /**
+     * 
+     * @return INT - Row number
+     */
     public function getRow(){
         return $this->rowNumber;
+    }
+    
+    /**
+     * 
+     * @param type $token
+     * @return type string error name
+     */
+    public function getTokenMeaning($token){
+        $str = $this->terminals[$token];
+        
+        //deleting things for pregmatch
+        return substr($str, 3,-1);
     }
     
      /**
