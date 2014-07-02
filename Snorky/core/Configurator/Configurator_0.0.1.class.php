@@ -12,5 +12,8 @@
  * @author David & Karel
  */
 class Configurator {
-    //put your code here
+   
+	private getMySQLData() {
+
+	}
 }

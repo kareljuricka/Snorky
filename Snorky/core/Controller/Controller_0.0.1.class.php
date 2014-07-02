@@ -12,5 +12,33 @@
  * @author David & Karel
  */
 class Controller {
-    //put your code here
+    
+    private $instance_register;
+    	
+    public function __construct() {
+
+    	// Init register of instance
+    	$this->instance_register = Register::getRegistry("instance");
+
+    	// Init configurations
+    	$this->instance_register->put("configurator", new Configurator());
+
+    	// Init templates
+    	$this->instance_register->put("template", new Template());
+
+    }
+
+    private function establishDBConnection() {
+
+    	$configuration = $this->instance_register->get("configurator");
+
+    	dibi::connect(array(
+		    'driver'   => 'mysql',
+		    'host'     => 'localhost',
+		    'username' => 'root',
+		    'password' => '***',
+		    'database' => 'test',
+		    'charset'  => 'utf8',
+		));
+    }
 }
