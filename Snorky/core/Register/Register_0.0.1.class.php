@@ -25,8 +25,8 @@ class Register {
 	 * @return object Registry
 	 */
 	public static function getRegistry($name) {
-		if (self::$instance[$name] === null) {
-			self::$instance[$name] = new Registry();
+		if (!array_key_exists($name, self::$instance)) {
+			self::$instance[$name] = new Register();
 		}
 		return self::$instance[$name];
 	}

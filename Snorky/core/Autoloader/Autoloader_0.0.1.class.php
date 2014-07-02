@@ -15,15 +15,18 @@ define("__ROOT", $_SERVER ["HTTP_HOST"]."/" );
 
 class Autoloader {
     
-    public static $basedir = '';
+    public static $baseDir = '';
+    public static $classCoreDir = ''; 
     public static $classLibDir = ''; 
-    public static $pluginDir = '';
     
-    
-    static public function loader($className) {
-        
-        $filename = self::$basedir . self::$classLibDir .'/'.substr($className,  strrpos($className, '\\')+1). ".class.php";
-        
+    static public function coreLoader($className) {
+
+        $path = self::$baseDir . "/" . self::$classCoreDir . "/" . $className;
+
+        $latest_version = self::getLatestVersion($path);
+
+        $filename = $path . "/" . $className . "_" . $latest_version . ".class.php"; 
+
         if (file_exists($filename)) {
             include($filename);
             if (class_exists($className)) {
@@ -32,10 +35,15 @@ class Autoloader {
         }
         return FALSE;
     }
-    
-    static public function pluginLloader($className){
-        $filename = self::$basedir . self::$pluginDir .'/'.substr($className,  strrpos($className, '\\')+1). ".class.php";
-      
+
+    static public function libLoader($className) {
+
+        $path = self::$baseDir . "/" . self::$classLibDir . "/" . $className;
+
+        $latest_version = self::getLatestVersion($path);
+
+        $filename = $path . "/" . $className . "/" . $latest_version . "/" . $className .  ".php";
+
         if (file_exists($filename)) {
             include($filename);
             if (class_exists($className)) {
@@ -43,20 +51,39 @@ class Autoloader {
             }
         }
         return FALSE;
+
     }
-    
-    static public function corePluginLloader($className){
-        $filename = self::$basedir . 'corePlugins/'.substr($className,  strrpos($className, '\\')). ".class.php";
-       
-        if (file_exists($filename)) {
-            include($filename);
-            if (class_exists($className)) {
-                return TRUE;
+
+    private static function getLatestVersion($path) {
+        $return_array = array();
+        if ($handle = opendir($path)) {
+            while (false !== ($entry = readdir($handle))) {
+                if ($entry != "." && $entry != "..") {
+                    if (!is_dir($path . "/" . $entry)) {
+                        $versionPrefixPos = strpos($entry, "_");
+                        $versionPostfixPos = strpos($entry, ".class.php");
+                        $entry = substr($entry, $versionPrefixPos + 1, $versionPostfixPos - $versionPrefixPos - 1);
+                    }
+                    $return_array[] = $entry;
+                }
             }
+            closedir($handle);
         }
-        return FALSE;
+        usort($return_array, array("self", "compareVersions"));
+
+        return $return_array[0];
+    }
+
+    /** Version comparing
+     * @param string version
+     * @param string version
+     * @return int higher version
+     */
+    private static function compareVersions($a, $b){
+        return version_compare($b, $a);
     }
 }
-spl_autoload_register('\Snorky\Autoloader::loader');
-spl_autoload_register('\Cougar\Autoloader::pluginLloader');
-spl_autoload_register('\Cougar\Autoloader::corePluginLloader');
+
+
+spl_autoload_register('\Snorky\Autoloader::coreLoader');
+spl_autoload_register('\Snorky\Autoloader::libLoader');

@@ -7,13 +7,21 @@
  */
 
 /**
- * Description of Parser
+ * Description of configurator
  *
  * @author David & Karel
  */
 class Configurator {
-   
-	private getMySQLData() {
 
+	private $config = null;
+
+	public function __construct() {
+		$this->config = $this->loadConfig();
 	}
+
+	private function loadConfig() {
+		//return simplexml_load_file($config_file);
+	}
+   
+	
 }
