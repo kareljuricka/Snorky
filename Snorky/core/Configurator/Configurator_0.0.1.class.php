@@ -15,13 +15,12 @@ class Configurator {
 
 	private $config = null;
 
-	public function __construct($paths, $config_file) {
-		$this->config = loadConfig($config_file);
-		var_dump($this->config);
+	public function __construct() {
+		$this->config = $this->loadConfig();
 	}
 
-	private function loadConfig($config_file) {
-		return simplexml_load_file($config_file);
+	private function loadConfig() {
+		//return simplexml_load_file($config_file);
 	}
    
 	

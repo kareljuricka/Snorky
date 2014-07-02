@@ -16,17 +16,16 @@ define("__ROOT", $_SERVER ["HTTP_HOST"]."/" );
 class Autoloader {
     
     public static $baseDir = '';
+    public static $classCoreDir = ''; 
     public static $classLibDir = ''; 
     
-    static public function libLoader($className) {
-        
-        //$filename = self::$basedir . self::$classLibDir .'/'.substr($className,  strrpos($className, '\\')+1). ".class.php";
-        
-        $path = self::$baseDir . "/" . self::$classLibDir . "/" . $className . "/";
+    static public function coreLoader($className) {
+
+        $path = self::$baseDir . "/" . self::$classCoreDir . "/" . $className;
 
         $latest_version = self::getLatestVersion($path);
 
-        $filename = self::$baseDir . "/" . self::$classLibDir . "/" . $className . "/" . $latest_version; 
+        $filename = $path . "/" . $className . "_" . $latest_version . ".class.php"; 
 
         if (file_exists($filename)) {
             include($filename);
@@ -37,11 +36,34 @@ class Autoloader {
         return FALSE;
     }
 
+    static public function libLoader($className) {
+
+        $path = self::$baseDir . "/" . self::$classLibDir . "/" . $className;
+
+        $latest_version = self::getLatestVersion($path);
+
+        $filename = $path . "/" . $className . "/" . $latest_version . "/" . $className .  ".php";
+
+        if (file_exists($filename)) {
+            include($filename);
+            if (class_exists($className)) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+
+    }
+
     private static function getLatestVersion($path) {
         $return_array = array();
         if ($handle = opendir($path)) {
             while (false !== ($entry = readdir($handle))) {
                 if ($entry != "." && $entry != "..") {
+                    if (!is_dir($path . "/" . $entry)) {
+                        $versionPrefixPos = strpos($entry, "_");
+                        $versionPostfixPos = strpos($entry, ".class.php");
+                        $entry = substr($entry, $versionPrefixPos + 1, $versionPostfixPos - $versionPrefixPos - 1);
+                    }
                     $return_array[] = $entry;
                 }
             }
@@ -63,4 +85,5 @@ class Autoloader {
 }
 
 
-spl_autoload_register('\Snorky\Autoloader::loader');
+spl_autoload_register('\Snorky\Autoloader::coreLoader');
+spl_autoload_register('\Snorky\Autoloader::libLoader');

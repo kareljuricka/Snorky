@@ -19,7 +19,7 @@ class Controller {
     	
     public function __construct() {
 
-    	$configurator = new Configurator($this->paths, $this->configFile);
+    	$configurator = new Configurator();
 
     	// Init register of instance
     	$this->instanceRegister = Register::getRegistry("instance");
@@ -28,7 +28,7 @@ class Controller {
     	$this->instanceRegister->put("configurator", $configurator);
 
     	// Init templates
-    	$this->instanceRegister->put("template", new Template());
+    	$this->instanceRegister->put("template", new Templater());
 
     }
 
