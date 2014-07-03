@@ -36,4 +36,8 @@ class Configurator {
 	public function getTemplateDir() {
 		return  $this->dir .  "/" . $this->config->Template->Dir;
 	}
+
+	public function getTemplate($templateName) {
+		return  $this->getTemplateDir() . "/" . $templateName . "." . $this->config->Template->Extension;
+	}
 }
