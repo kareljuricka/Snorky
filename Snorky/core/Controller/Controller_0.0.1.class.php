@@ -19,9 +19,9 @@ class Controller {
     
     private $instanceRegister = null;
     	
-    public function __construct($configFilePath) {
+    public function __construct($dir, $configFile) {
 
-    	$configurator = new Configurator($configFilePath);
+    	$configurator = new Configurator($dir, $configFile);
 
     	// Init register of instance
     	$this->instanceRegister = Register::getRegistr("instance");
@@ -33,8 +33,6 @@ class Controller {
     	$this->instanceRegister->put("template", new Templater());
 
         $this->establishDBConnection();
-
-        $configurator->getTemplateDir();
 
 
     }

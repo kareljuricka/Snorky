@@ -18,12 +18,15 @@ class Configurator {
 
 	private $config = null;
 
-	public function __construct($configFilePath) {
-		$this->config = $this->loadConfig($configFilePath);
+	private $dir = null;
+
+	public function __construct($dir, $configFile) {
+		$this->dir = $dir;
+		$this->config = $this->loadConfig($configFile);
 	}
 
-	private function loadConfig($configFilePath) {
-		return simplexml_load_file($configFilePath);
+	private function loadConfig($configFile) {
+		return simplexml_load_file($this->dir . "/" . $configFile);
 	}
 
 	public function getDatabaseData() {
@@ -31,6 +34,6 @@ class Configurator {
 	}
 
 	public function getTemplateDir() {
-		return DIRNAME(__FILE__) . "/" . $this->config->Template->Dir;
+		return  $this->dir .  "/" . $this->config->Template->Dir;
 	}
 }
