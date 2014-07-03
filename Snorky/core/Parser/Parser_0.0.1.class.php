@@ -14,20 +14,24 @@ class Parser {
     // variables for objects
     protected $Lexer = null;
     protected $Error = null;
+    protected $Register = null;
     
     
     protected $code = null;
     protected $pluginsStack = array(); // variable for checking cyclical calling plugins    
     protected $codeOk = true;
     protected $errorMessage = '';
-    protected $Error;
-    protected $cache = false; //chaching not allowed, becasue imho is unneficent so it is disable by lexer
+   
+    
+    protected   $cache = false; 
     
     private $pluginChecked = array(); // array for skipping already checked plugins
     
     public function __construct($file) {
         $this->Lexer = new Scanner($file);
         $this->Error = Error::getInstance(); // singleton
+        $this->Register = Register::getRegistry("variables");
+        $this->code="echo\"";
     }
     
         
@@ -63,7 +67,7 @@ class Parser {
     
     protected function T_OPEN(){
         try {
-            
+            $token = $this->Lexer->getToken(FALSE);
         } 
         catch (LexError $ex){
                 $this->recoverToKey();
@@ -74,6 +78,27 @@ class Parser {
             throw new Exception("Unexpected end of file.",4 );
         
         }
+        
+        
+        // continue in gramatical rules
+        
+        switch ($token['token']){
+            case "T_CACHEABLE":     $this->cache = true;
+                                    $this->T_OPEN();
+                                    break;
+            case "T_VAR":   if($this->cache){
+                                $this->code.= $this->Register->get($token["match"]);
+                            }
+                            else {
+                                $this->code .= $token["match"];
+                            }
+                            $this->
+                            break;
+                            
+            case
+        }
+        
+        protected function 
     }
     
     

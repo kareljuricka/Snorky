@@ -31,6 +31,7 @@ class Scanner {
         "/^(cacheable)/" => "T_CACHEABLE",
         "/^(params)/" => "T_PARAMS",
         "/^(=)/" => "T_IS",
+        "/^(+)/" => "T_PLUS",
         "/^(\.)/" => "T_CONCAT",
         "/^(\{)/" => "T_PARAM_START",
         "/^(\})/" => "T_PARAM_END",
