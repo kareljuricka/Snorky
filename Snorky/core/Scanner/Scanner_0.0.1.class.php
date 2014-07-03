@@ -137,7 +137,7 @@ class Scanner {
                 }
             }
  
-            throw new LexError;
+            throw new EndOfFile;
         }
         
         

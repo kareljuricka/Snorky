@@ -50,7 +50,7 @@ class Parser {
             
             catch (LexError $ex){
                 $this->recoverToKey();
-                $this->Error->putError(4,$this->lexer->getRow()}\r\n";
+                $this->Error->putError($ex->GetExceptionLevel(),$ex->getMessage());;
                 $this->codeOk = false;
             }
             catch (EndOfFile $ex) {
@@ -71,8 +71,8 @@ class Parser {
                 $this->codeOk = false;
         }
         catch (EndOfFile $ex) {
-                $
-               
+            throw new Exception("Unexpected end of file.",4 );
+        
         }
     }
     
