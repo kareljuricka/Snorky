@@ -34,8 +34,6 @@ class Controller {
 
         $this->establishDBConnection();
 
-        echo $configurator->getTemplate("default");
-
 
     }
 
