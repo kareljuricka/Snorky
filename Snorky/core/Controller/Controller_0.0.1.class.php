@@ -12,6 +12,9 @@
  *
  * @author David & Karel
  */
+
+namespace Snorky;
+
 class Controller {
     
     private $instanceRegister = null;
@@ -21,7 +24,7 @@ class Controller {
     	$configurator = new Configurator($configFilePath);
 
     	// Init register of instance
-    	$this->instanceRegister = Register::getRegistry("instance");
+    	$this->instanceRegister = Register::getRegistr("instance");
 
     	// Init configurations
     	$this->instanceRegister->put("configurator", $configurator);
@@ -31,6 +34,8 @@ class Controller {
 
         $this->establishDBConnection();
 
+        $configurator->getTemplateDir();
+
 
     }
 
@@ -38,7 +43,7 @@ class Controller {
 
     	$configurationDatabase = $this->instanceRegister->get("configurator")->getDatabaseData();
 
-    	dibi::connect(array(
+    	\dibi::connect(array(
 		    "driver"   => $configurationDatabase->Driver,
 		    "host"     => $configurationDatabase->Server,
 		    "username" => $configurationDatabase->Admin->Login,

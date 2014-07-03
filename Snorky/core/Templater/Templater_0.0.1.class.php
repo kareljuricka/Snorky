@@ -11,6 +11,9 @@
  *
  * @author David
  */
+
+namespace Snorky;
+
 class Templater {
     //put your code here
 }

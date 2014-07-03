@@ -26,15 +26,19 @@ class Autoloader {
      */
     static public function coreLoader($className) {
 
-        if (!is_dir($path = self::$baseDir . "/" . self::$classCoreDir . "/" . $className))
+        if ($lastNsPos = strrpos($className, '\\'))
+            $className = substr($className,  $lastNsPos + 1);
+
+        if (!is_dir($path = self::$baseDir . "/" . self::$classCoreDir . "/" . $className)) {
             return false;
+        }
 
         $latest_version = self::getLatestVersion($path);
 
         $filename = $path . "/" . $className . "_" . $latest_version . ".class.php"; 
 
         if (file_exists($filename)) {
-            include($filename);
+            require_once($filename);
             if (class_exists($className)) {
                 return true;
             }
@@ -48,6 +52,8 @@ class Autoloader {
      * @return bool            success of searching of class
      */
     static public function libLoader($className) {
+
+        $className = substr($className,  strrpos($className, '\\'));
         
         if (!is_dir($path = self::$baseDir . "/" . self::$classLibDir . "/" . $className))
             return false;
@@ -57,7 +63,7 @@ class Autoloader {
         $filename = $path . "/" . $latest_version . "/" . $className .  ".php";
 
         if (file_exists($filename)) {
-            include($filename);
+            require_once($filename);
             if (class_exists($className)) {
                 return true;
             }

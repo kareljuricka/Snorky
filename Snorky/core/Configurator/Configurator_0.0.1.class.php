@@ -11,6 +11,9 @@
  *
  * @author David & Karel
  */
+
+namespace Snorky;
+
 class Configurator {
 
 	private $config = null;
@@ -25,5 +28,9 @@ class Configurator {
 
 	public function getDatabaseData() {
 		return $this->config->Database;
+	}
+
+	public function getTemplateDir() {
+		return DIRNAME(__FILE__) . "/" . $this->config->Template->Dir;
 	}
 }
