@@ -20,7 +20,7 @@ class Configurator {
 	}
 
 	private function loadConfig() {
-		//return simplexml_load_file($config_file);
+		//return simplexml_load_file();
 	}
    
 	
