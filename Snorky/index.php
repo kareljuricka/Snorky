@@ -16,7 +16,7 @@
 	\Snorky\Autoloader::$classCoreDir = $paths["classCoreDir"]; 
 	\Snorky\Autoloader::$classLibDir = $paths["classLibDir"]; 
 
-	$controller = new Controller($configFilePath);	
+	$controller = new \Snorky\Controller($configFilePath);	
 
 
 ?>

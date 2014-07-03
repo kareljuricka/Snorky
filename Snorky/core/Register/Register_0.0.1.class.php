@@ -26,7 +26,7 @@ class Register {
 	 * @param name name of registr to use
 	 * @return object Registry
 	 */
-	public static function getRegistry($name) {
+	public static function getRegistr($name) {
 		if (!array_key_exists($name, self::$instance)) {
 			self::$instance[$name] = new Register();
 		}
