@@ -21,8 +21,8 @@ class Parser {
     protected $pluginsStack = array(); // variable for checking cyclical calling plugins    
     protected $codeOk = true;
     protected $errorMessage = '';
-   
-    
+    protected $context = "";
+
     protected   $cache = false; 
     
     private $pluginChecked = array(); // array for skipping already checked plugins
@@ -92,14 +92,20 @@ class Parser {
                             else {
                                 $this->code .= $token["match"];
                             }
-                            $this->
+                            $this->signParse();
                             break;
                             
-            case
+            case "T_VAR_CONTEXT":   if($this->cache){
+                                        $cutIndex = 
+                                    }
+                
+                                    break;
         }
-        
-        protected function 
     }
+    
+    protected function signParse(){
+            
+     } 
     
     
 

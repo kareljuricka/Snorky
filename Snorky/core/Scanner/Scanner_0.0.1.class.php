@@ -47,7 +47,7 @@ class Scanner {
      public function __construct($file) {
         $this->rowNumber = 0;
         
-        if(! ($this->fileHandler = fopen($file, "r"))){
+        if(! ($this->fileHandler = fopen($file.".tpl", "r"))){
              throw new Exception('Cannot open template file',0);
         }        
     }
