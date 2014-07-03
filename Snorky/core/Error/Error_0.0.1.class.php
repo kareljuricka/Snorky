@@ -21,7 +21,7 @@ class Error {
 	private function __construct();
 
 	public static function getInstance() {
-		if (self::$instance === false)
+		if (self::$instance === null)
 			self::$instance = new Error();	
 		else
 			return self::$instance;
@@ -29,6 +29,10 @@ class Error {
 
 	public function putError($errorNum, $errorMsg) {
 		$this->$errors[$errorNum] = $errorMsg;
+	}
+
+	public function getErrors() {
+		return $this->$errors;
 	}
 }
 
