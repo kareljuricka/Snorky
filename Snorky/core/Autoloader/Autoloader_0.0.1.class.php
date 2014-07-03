@@ -19,6 +19,11 @@ class Autoloader {
     public static $classCoreDir = ''; 
     public static $classLibDir = ''; 
     
+    /**
+     * Load core class files
+     * @param  string $className class to use
+     * @return bool            success of searching of class
+     */
     static public function coreLoader($className) {
 
         if (!is_dir($path = self::$baseDir . "/" . self::$classCoreDir . "/" . $className))
@@ -37,6 +42,11 @@ class Autoloader {
         return false;
     }
 
+    /**
+     * Load lib class files
+     * @param  string $className class to use
+     * @return bool            success of searching of class
+     */
     static public function libLoader($className) {
         
         if (!is_dir($path = self::$baseDir . "/" . self::$classLibDir . "/" . $className))
@@ -56,17 +66,17 @@ class Autoloader {
 
     }
 
+    /**
+     * Get latest version of folder/file
+     * @param  string $path folder destination
+     * @return string       lastest version (in format e.g. 2.2.2)
+     */
     private static function getLatestVersion($path) {
         $return_array = array();
         if ($handle = opendir($path)) {
-            while (false !== ($entry = readdir($handle))) {
+            while (($entry = readdir($handle)) !== false) {
                 if ($entry != "." && $entry != "..") {
-                    if (!is_dir($path . "/" . $entry)) {
-                        $versionPrefixPos = strpos($entry, "_");
-                        $versionPostfixPos = strpos($entry, ".class.php");
-                        $entry = substr($entry, $versionPrefixPos + 1, $versionPostfixPos - $versionPrefixPos - 1);
-                    }
-                    $return_array[] = $entry;
+                    $return_array[] = self::parseVersion($path, $entry);
                 }
             }
             closedir($handle);
@@ -74,6 +84,21 @@ class Autoloader {
         usort($return_array, array("self", "compareVersions"));
 
         return $return_array[0];
+    }
+
+    /**
+     * Parse version from string entry
+     * @param  string $entry entry name
+     * @return string        parsed version number
+     */
+    private static function parseVersion($path, $entry) {
+        if (!is_dir($path . "/" . $entry)) {
+            $versionPrefixPos = strpos($entry, "_");
+            $versionPostfixPos = strpos($entry, ".class.php");
+            return substr($entry, $versionPrefixPos + 1, $versionPostfixPos - $versionPrefixPos - 1);
+        }
+        else
+            return $entry;
     }
 
     /** Version comparing
@@ -86,6 +111,6 @@ class Autoloader {
     }
 }
 
-
+// Register folders
 spl_autoload_register('\Snorky\Autoloader::coreLoader');
 spl_autoload_register('\Snorky\Autoloader::libLoader');
