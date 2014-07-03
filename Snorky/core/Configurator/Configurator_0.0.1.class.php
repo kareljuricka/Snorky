@@ -15,13 +15,15 @@ class Configurator {
 
 	private $config = null;
 
-	public function __construct() {
-		$this->config = $this->loadConfig();
+	public function __construct($configFilePath) {
+		$this->config = $this->loadConfig($configFilePath);
 	}
 
-	private function loadConfig() {
-		//return simplexml_load_file();
+	private function loadConfig($configFilePath) {
+		return simplexml_load_file($configFilePath);
 	}
-   
-	
+
+	public function getDatabaseData() {
+		return $this->config->Database;
+	}
 }

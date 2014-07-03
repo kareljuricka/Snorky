@@ -16,9 +16,9 @@ class Controller {
     
     private $instanceRegister = null;
     	
-    public function __construct() {
+    public function __construct($configFilePath) {
 
-    	$configurator = new Configurator();
+    	$configurator = new Configurator($configFilePath);
 
     	// Init register of instance
     	$this->instanceRegister = Register::getRegistry("instance");
@@ -36,15 +36,15 @@ class Controller {
 
     private function establishDBConnection() {
 
-    	$configuration = $this->instanceRegister->get("configurator");
+    	$configurationDatabase = $this->instanceRegister->get("configurator")->getDatabaseData();
 
     	dibi::connect(array(
-		    "driver"   => "mysql",
-		    "host"     => "localhost",
-		    "username" => "snorky",
-		    "password" => "LUHmh4XG",
-		    "database" => "snorky",
-		    "charset"  => "utf8"
+		    "driver"   => $configurationDatabase->Driver,
+		    "host"     => $configurationDatabase->Server,
+		    "username" => $configurationDatabase->Admin->Login,
+		    "password" => $configurationDatabase->Admin->Password,
+		    "database" => $configurationDatabase->Database,
+		    "charset"  => $configurationDatabase->Charset
 		));
     }
 }
