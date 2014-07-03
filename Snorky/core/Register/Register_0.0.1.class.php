@@ -11,6 +11,8 @@
  *
  * @author David & Karel
  */
+namespace Snorky;
+
 class Register {
 
 	// Registry instance
