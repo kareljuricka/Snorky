@@ -39,15 +39,15 @@ class Controller {
 
     private function establishDBConnection() {
 
-    	$configurationDatabase = $this->instanceRegister->get("configurator")->getDatabaseData();
+    	$adminDatabaseData = $this->instanceRegister->get("configurator")->getAdminDatabaseData();
 
     	\dibi::connect(array(
-		    "driver"   => $configurationDatabase->Driver,
-		    "host"     => $configurationDatabase->Server,
-		    "username" => $configurationDatabase->Admin->Login,
-		    "password" => $configurationDatabase->Admin->Password,
-		    "database" => $configurationDatabase->Database,
-		    "charset"  => $configurationDatabase->Charset
+		    "driver"   => $adminDatabaseData["driver"],
+		    "host"     => $adminDatabaseData["server"],
+		    "username" => $adminDatabaseData["login"],
+		    "password" => $adminDatabaseData["password"],
+		    "database" => $adminDatabaseData["database"],
+		    "charset"  => $adminDatabaseData["charset"]
 		));
     }
 }
