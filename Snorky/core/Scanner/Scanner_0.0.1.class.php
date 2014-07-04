@@ -21,7 +21,10 @@ class Scanner {
     private $rowNumber = 0;
     private $fileHandler = null;
     private $cachedString =null;
-    
+    protected $instanceRegister = null;
+    protected $configurator = null;
+
+
     //this array defines token fo regullar expressions
     protected static $_terminals = array(
         "/^({:)/" => "T_OPEN",
@@ -44,10 +47,12 @@ class Scanner {
         "/^(\$\w+)/" => "T_VAR",
     );
     
-     public function __construct($file) {
+     public function __construct($templateName) {
         $this->rowNumber = 0;
+        $this->instanceRegister = Register::getRegistr("instance");
+        $this->configurator = $this->instanceRegister->get("configurator");
         
-        if(! ($this->fileHandler = fopen($file.".tpl", "r"))){
+        if(! ($this->fileHandler = fopen($this->configurator->getTemplate($templateName), "r"))){
              throw new Exception('Cannot open template file',0);
         }        
     }
