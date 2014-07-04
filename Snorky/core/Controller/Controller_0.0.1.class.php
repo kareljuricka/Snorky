@@ -14,7 +14,7 @@ class Controller {
     
     private $instanceRegister = null;
     	
-    public function __construct($dir, $configFile) {
+    public function __construct($dir, $configFile, $logFile) {
 
     	$configurator = new Configurator($dir, $configFile);
 
@@ -23,6 +23,8 @@ class Controller {
 
     	// Init configurations
     	$this->instanceRegister->put("configurator", $configurator);
+
+        $this->instanceRegister->put("logger", new Logger($logFile));
 
         // Init templates
         $this->instanceRegister->put("multilanguage", new Multilanguage("cz"));

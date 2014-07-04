@@ -12,6 +12,12 @@ namespace Snorky;
 
 class Logger {
 
+    private $logTypes = Array(
+        1 => "E_ERROR",
+        2 => "W_WARNING",
+        3 => "I_INFO"
+    );
+
 	private $instanceRegister = null;
 
 	private $logfile = null;
@@ -22,15 +28,32 @@ class Logger {
 
     	// Init register of instance
     	$this->instanceRegister = Register::getRegistr("instance");
-
     }
 
-    public function putLog($logMessage) {
+    /**
+     * Store log in file
+     * @param  int $logNumber  log identifer
+     * @param  string $logMessage describing message
+     * @param  string $loggedFile file in which log appeared
+     * @param  int $logLine    line of file to describe in log
+     */
+    public function putLog($logNumber, $logMessage, $loggedFile, $logLine) {
 
     	$dir = $this->instanceRegister->get("configurator")->getDir();
 
-
+        $date =  date("[Y-m-d h:i:s]",time());
+        $client_ip = "[".$_SERVER['REMOTE_ADDR']."]";
         
+        // Get PHP error name
+        if(isset($this->logTypes[$logNumber])) {
+            $logName = $this->logTypes[$logNumber];
+        } else {
+            $logName = $logNumber;
+        }
+        
+        $text = "Error: $logName - $logMessage; Line: $logLine; File: $loggedFile\n";
+        
+        file_put_contents($dir . "/" . $this->logFile, $date.$client_ip." ".$text, FILE_APPEND);
 
     }
 
