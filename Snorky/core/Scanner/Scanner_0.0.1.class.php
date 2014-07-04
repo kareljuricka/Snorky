@@ -6,7 +6,7 @@
  *  copyright: Snorky Systems 2014
  *  
  *  version: 0.0.1
- *  last modification: 02.07.2014
+ *  last modification: 03.07.2014
  * 
  */
 /**
@@ -23,7 +23,8 @@ class Scanner {
     private $cachedString =null;
     protected $instanceRegister = null;
     protected $configurator = null;
-
+    
+    protected $cacheStack = null; 
 
     //this array defines token fo regullar expressions
     protected static $_terminals = array(
@@ -34,8 +35,12 @@ class Scanner {
         "/^(cacheable)/" => "T_CACHEABLE",
         "/^(params)/" => "T_PARAMS",
         "/^(=)/" => "T_IS",
-        "/^(+)/" => "T_PLUS",
+        "/^(\+)/" => "T_PLUS",
         "/^(\.)/" => "T_CONCAT",
+        "/^(\/)/" => "T_DIV",
+        "/^(\*)/" => "T_MUL",
+        "/^(\()/" => "L_BRA",
+        "/^(\))/" => "R_BRA",
         "/^(\{)/" => "T_PARAM_START",
         "/^(\})/" => "T_PARAM_END",
         "/^(,)/" => "T_COMMA",
@@ -51,6 +56,7 @@ class Scanner {
         $this->rowNumber = 0;
         $this->instanceRegister = Register::getRegistr("instance");
         $this->configurator = $this->instanceRegister->get("configurator");
+        $this->cacheStack = new \SplStack();
         
         if(! ($this->fileHandler = fopen($this->configurator->getTemplate($templateName), "r"))){
              throw new Exception('Cannot open template file',0);
@@ -65,6 +71,15 @@ class Scanner {
         return $this->rowNumber;
     }
     
+    /**
+     * Method for storin token which was already read, but not used by parser, so parser will want this token next time
+     * when he asks lexer for token.
+     * @param type $token
+     */
+    public function setCache($token){
+        
+        $this->cacheStack->push($token);
+    }
     /**
      * 
      * @param type $token
@@ -118,6 +133,10 @@ class Scanner {
             return $token; 
             
         }else{
+            
+            if(!$this->cacheStack->isEmpty()) {
+                return $this->cacheStack->pop();
+            }
             // continues reading between start and end tag
             //removing white spaces from start of source string
             $this->cachedString = preg_replace(self::$_terminals['T_WHITESPACE'], '', $this->cachedString);
