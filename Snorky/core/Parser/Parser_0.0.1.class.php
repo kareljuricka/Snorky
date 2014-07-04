@@ -22,6 +22,10 @@ class Parser {
     protected $codeOk = true;
     protected $errorMessage = '';
     protected $context = "";
+    
+    protected $equationValues = array();
+    protected $equValIndex = 0;
+    protected $euation = "";
 
     protected   $cache = false; 
     
@@ -86,19 +90,13 @@ class Parser {
             case "T_CACHEABLE":     $this->cache = true;
                                     $this->T_OPEN();
                                     break;
-            case "T_VAR":   if($this->cache){
-                                $this->code.= $this->Register->get($token["match"]);
-                            }
-                            else {
-                                $this->code .= $token["match"];
-                            }
+            case "T_VAR":   $this->equationValues[$this->equValIndex++] =  $this->Register->get($token["match"]);
+                            $this->equation .= $token["match"]; 
                             $this->signParse();
                             break;
                             
-            case "T_VAR_CONTEXT":   if($this->cache){
-                                        $cutIndex = 
-                                    }
-                
+            case "T_VAR_CONTEXT":   $this->equationValues[$this->equValIndex++] =
+                                    $this->signParse();
                                     break;
         }
     }
