@@ -30,7 +30,7 @@ class Controller {
     	$this->instanceRegister->put("configurator", $configurator);
 
         // Init templates
-        $this->instanceRegister->put("multilanguage", new Multilanguage());
+        $this->instanceRegister->put("multilanguage", new Multilanguage("cz"));
 
     	// Init templates
     	$this->instanceRegister->put("template", new Templater());
@@ -54,5 +54,7 @@ class Controller {
 		));
 
         \dibi::getSubstitutes()->prefix = $adminDatabaseData["prefix"];
+
+        $this->instanceRegister->get("multilanguage")->getContextVariableValue("default", "a");
     }
 }

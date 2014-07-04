@@ -33,6 +33,8 @@ class Logger {
 
     	$dir = $this->instanceRegister->get("configurator")->getDir();
 
+    	
+
 
     }
 

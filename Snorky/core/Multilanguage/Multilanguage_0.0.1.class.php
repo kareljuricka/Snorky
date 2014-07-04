@@ -17,10 +17,12 @@ class Multilanguage {
 
     private $instanceRegister = null;
 
-    public function __construct() {
+    public function __construct($defaultLanguage) {
 
         // Init register of instance
         $this->instanceRegister = Register::getRegistr("instance");
+
+        $this->setLang($defaultLanguage);
     }
 
     public function setLang($lang) {
@@ -36,6 +38,14 @@ class Multilanguage {
 
     public function getContextVariableValue($pageTemplate, $contextVariableName) {
 
-        \dibi::query("SELECT value FROM [:prefix:context_varibles_cz] WHERE [pageTemplate] = %s AND [variableName] = %s", $pageTemplate, $contextVariableName);
+        $contextVarsTable = "context_variables_" . $this->language;
+
+        $result = \dibi::query("SHOW TABLES LIKE %s", $this->instanceRegister->get("configurator")->getDatabasePrefix() . $contextVarsTable);
+        if (!count($result))
+            throw new Exception("Database table for language '" . $this->language . "' doesn't exist",0);
+
+        $result = \dibi::query("SELECT value FROM [:prefix:".$contextVarsTable."] WHERE [pageTemplate] = %s AND [name] = %s", $pageTemplate, $contextVariableName);
+        
+        return $result->fetchSingle();
     }
 }
