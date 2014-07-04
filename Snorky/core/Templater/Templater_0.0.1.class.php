@@ -16,9 +16,21 @@ namespace Snorky;
 
 class Templater {
 
+	private $pageRegistry = null;
+
+	private $instanceRegistry = null;
+
 	public function __construct() {
-		//$parser = new Parser();
-		
+
+		// Init register of instance
+    	$this->instanceRegistry = Registry::getRegistry("instance");
+
+		// Init register of page
+        $this->pageRegistry = Registry::getRegistry("page");
+
+        $templateFile = $this->instanceRegistry->get("configurator")->getTemplate($this->pageRegistry->get("tpl"));
+
+		//$parser = new Parser($templateFile);
 	}
 
 	public function getPluginTemplateData($pluginName) {

@@ -29,17 +29,19 @@ class Controller {
     	// Init configurations
     	$this->instanceRegistry->put("configurator", $configurator);
 
+        $this->establishDBConnection();
+
+        $this->getPageData($page);
+
         $this->instanceRegistry->put("logger", new Logger($logFile));
 
         // Init templates
         $this->instanceRegistry->put("multilanguage", new Multilanguage("cz"));
 
-    	// Init templates
-    	$this->instanceRegistry->put("template", new Templater());
+        // Init templates
+        $this->instanceRegistry->put("template", new Templater());
 
-        $this->establishDBConnection();
-
-        $this->getPageData($page);
+        
 
 
     }
@@ -58,13 +60,11 @@ class Controller {
 		));
 
         \dibi::getSubstitutes()->prefix = $adminDatabaseData["prefix"];
-
-        $this->instanceRegistry->get("multilanguage")->getContextVariableValue("default", "a");
     }
 
     private function getPageData($page) {
 
-        $result = \dibi::query("SELECT title, tpl FROM [:prefix:page] WHERE name = %s", $page);
+        $result = \dibi::query("SELECT name, title, tpl FROM [:prefix:page] WHERE name = %s", $page);
         globals::addArrayToRegistry($result->fetch(), $this->pageRegistry);
 
     }
