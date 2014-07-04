@@ -11,6 +11,29 @@
  *
  * @author David
  */
+
+namespace Snorky;
+
 class Logger {
-    //put your code here
+
+	private $instanceRegister = null;
+
+	private $logfile = null;
+    
+    public function __construct($logFile) {
+
+    	$this->logFile = $logFile;
+
+    	// Init register of instance
+    	$this->instanceRegister = Register::getRegistr("instance");
+
+    }
+
+    public function putLog($logMessage) {
+
+    	$dir = $this->instanceRegister->get("configurator")->getDir();
+
+
+    }
+
 }

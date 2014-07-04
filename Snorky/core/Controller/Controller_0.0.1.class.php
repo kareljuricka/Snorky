@@ -29,6 +29,9 @@ class Controller {
     	// Init configurations
     	$this->instanceRegister->put("configurator", $configurator);
 
+        // Init templates
+        $this->instanceRegister->put("multilanguage", new Multilanguage());
+
     	// Init templates
     	$this->instanceRegister->put("template", new Templater());
 
@@ -49,5 +52,7 @@ class Controller {
 		    "database" => $adminDatabaseData["database"],
 		    "charset"  => $adminDatabaseData["charset"]
 		));
+
+        \dibi::getSubstitutes()->prefix = $adminDatabaseData["prefix"];
     }
 }

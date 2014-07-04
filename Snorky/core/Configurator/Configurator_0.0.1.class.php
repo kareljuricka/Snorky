@@ -29,11 +29,16 @@ class Configurator {
 		return simplexml_load_file($this->dir . "/" . $configFile);
 	}
 
+	public function getDir() {
+		return $this->dir;
+	}
+
 	public function getUserDatabaseData() {
 		$dbData["driver"] = $this->config->Database->Driver;
 		$dbData["database"] = $this->config->Database->Database;
 		$dbData["server"] = $this->config->Database->Server;
 		$dbData["charset"] = $this->config->Database->Charset;
+		$dbData["prefix"] = $this->config->Database->Prefix;
 		$dbData["login"] = $this->config->Database->User->Login;
 		$dbData["password"] = $this->config->Database->User->Password;
 
@@ -45,10 +50,15 @@ class Configurator {
 		$dbData["database"] = $this->config->Database->Database;
 		$dbData["server"] = $this->config->Database->Server;
 		$dbData["charset"] = $this->config->Database->Charset;
+		$dbData["prefix"] = $this->config->Database->Prefix;
 		$dbData["login"] = $this->config->Database->Admin->Login;
 		$dbData["password"] = $this->config->Database->Admin->Password;
 
 		return $dbData;
+	}
+
+	public function getDatabasePrefix() {
+		return $this->config->Database->Prefix;
 	}
 
 	public function getTemplateDir() {
