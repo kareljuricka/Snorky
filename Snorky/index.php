@@ -1,5 +1,13 @@
 <?php
-
+/* 
+ *  author: Karel Juřička <kapa@loveart.cz>, David Buchta <david.buchta@hotmail.com>
+ *  created: 02.07.2014
+ *  copyright: Snorky Systems
+ *  
+ *  version: 0.0.1
+ *  last modification: 03.07.2014
+ * 
+ */
 	// Error reporting on
 	ini_set('display_errors',1); 
  	error_reporting(E_ALL);

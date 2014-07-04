@@ -1,12 +1,12 @@
 <?php
 
 /* 
- *  author: David Buchta <david.buchta@hotmail.com>
- *  created: 13.03.2014
- *  copyright: prorybare.eu
+ *  author: Karel Juřička <kapa@loveart.cz>
+ *  created: 04.07.2014
+ *  copyright: Snorky Systems
  *  
- *  version: 0.1.1
- *  last modification: 13.03.2014
+ *  version: 0.0.1
+ *  last modification: 04.07.2014
  * 
  */
 namespace Snorky;

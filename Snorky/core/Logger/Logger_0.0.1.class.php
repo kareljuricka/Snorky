@@ -1,17 +1,13 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/* 
+ *  author: Karel Juřička <kapa@loveart.cz>
+ *  created: 04.07.2014
+ *  copyright: Snorky Systems
+ *  
+ *  version: 0.0.1
+ *  last modification: 04.07.2014
+ * 
  */
-
-/**
- * Description of Templater
- *
- * @author David
- */
-
 namespace Snorky;
 
 class Logger {
@@ -33,7 +29,7 @@ class Logger {
 
     	$dir = $this->instanceRegister->get("configurator")->getDir();
 
-        
+
         
 
     }

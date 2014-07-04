@@ -1,18 +1,13 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/* 
+ *  author: Karel Juřička <kapa@loveart.cz>
+ *  created: 02.07.2014
+ *  copyright: Snorky Systems
+ *  
+ *  version: 0.0.1
+ *  last modification: 04.07.2014
+ * 
  */
-
-
-/**
- * Description of Controller
- *
- * @author David & Karel
- */
-
 namespace Snorky;
 
 class Controller {

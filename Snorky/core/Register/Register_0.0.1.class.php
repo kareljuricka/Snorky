@@ -1,15 +1,12 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/**
- * Description of Register
- *
- * @author David & Karel
+/* 
+ *  author: Karel Juřička <kapa@loveart.cz>, David Buchta <david.buchta@hotmail.com>
+ *  created: 02.07.2014
+ *  copyright: Snorky Systems
+ *  
+ *  version: 0.0.1
+ *  last modification: 03.07.2014
+ * 
  */
 namespace Snorky;
 
