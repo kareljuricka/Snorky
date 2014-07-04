@@ -10,7 +10,7 @@
  */
 namespace Snorky;
 
-class Register {
+class Registry {
 
 	// Registry instance
 	private static $instance = Array();
@@ -23,9 +23,9 @@ class Register {
 	 * @param name name of registr to use
 	 * @return object Registry
 	 */
-	public static function getRegistr($name) {
+	public static function getRegistry($name) {
 		if (!array_key_exists($name, self::$instance)) {
-			self::$instance[$name] = new Register();
+			self::$instance[$name] = new Registry();
 		}
 		return self::$instance[$name];
 	}
@@ -43,8 +43,6 @@ class Register {
 			$this -> registry[$key] = $value;
 			return true;
 		}
-
-		
 	}
 
 	/** Get record from registry

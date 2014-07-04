@@ -22,4 +22,10 @@ abstract class Globals {
         $result = \dibi::query("SHOW TABLES LIKE %s", $tableName);
         return (!count($result)) ? false : true;
     }
+
+    public static function addArrayToRegistry($array, $registr) {
+    	foreach ($array as $key => $value) {
+    		$registr->put($key, $value);
+    	}
+    }
 }

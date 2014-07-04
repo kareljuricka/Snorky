@@ -19,12 +19,14 @@
    	$configFile = "config.cfg";
    	$logFile = "log/logs.txt";
 
+   	$page = (isset($_GET["page"])) ? $_GET["page"] : "homepage";
+
 	require_once($paths["baseDir"] . "/" . $paths["classCoreDir"] ."/Autoloader/Autoloader_0.0.1.class.php");
 
 	\Snorky\Autoloader::$baseDir = $paths["baseDir"];
 	\Snorky\Autoloader::$classCoreDir = $paths["classCoreDir"]; 
 	\Snorky\Autoloader::$classLibDir = $paths["classLibDir"]; 
 
-	$controller = new \Snorky\Controller($paths["baseDir"], $configFile, $logFile);	
+	$controller = new \Snorky\Controller($paths["baseDir"], $configFile, $page, $logFile);	
 
 ?>

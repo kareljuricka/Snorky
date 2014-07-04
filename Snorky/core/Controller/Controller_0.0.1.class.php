@@ -12,34 +12,41 @@ namespace Snorky;
 
 class Controller {
     
-    private $instanceRegister = null;
+    private $instanceRegistry = null;
+
+    private $pageRegister = null;
     	
-    public function __construct($dir, $configFile, $logFile) {
+    public function __construct($dir, $configFile, $page, $logFile) {
 
     	$configurator = new Configurator($dir, $configFile);
 
     	// Init register of instance
-    	$this->instanceRegister = Register::getRegistr("instance");
+    	$this->instanceRegistry = Registry::getRegistry("instance");
+
+        // Init register of page
+        $this->pageRegistry = Registry::getRegistry("page");
 
     	// Init configurations
-    	$this->instanceRegister->put("configurator", $configurator);
+    	$this->instanceRegistry->put("configurator", $configurator);
 
-        $this->instanceRegister->put("logger", new Logger($logFile));
+        $this->instanceRegistry->put("logger", new Logger($logFile));
 
         // Init templates
-        $this->instanceRegister->put("multilanguage", new Multilanguage("cz"));
+        $this->instanceRegistry->put("multilanguage", new Multilanguage("cz"));
 
     	// Init templates
-    	$this->instanceRegister->put("template", new Templater());
+    	$this->instanceRegistry->put("template", new Templater());
 
         $this->establishDBConnection();
+
+        $this->getPageData($page);
 
 
     }
 
     private function establishDBConnection() {
 
-    	$adminDatabaseData = $this->instanceRegister->get("configurator")->getAdminDatabaseData();
+    	$adminDatabaseData = $this->instanceRegistry->get("configurator")->getAdminDatabaseData();
 
     	\dibi::connect(array(
 		    "driver"   => $adminDatabaseData["driver"],
@@ -52,6 +59,13 @@ class Controller {
 
         \dibi::getSubstitutes()->prefix = $adminDatabaseData["prefix"];
 
-        $this->instanceRegister->get("multilanguage")->getContextVariableValue("default", "a");
+        $this->instanceRegistry->get("multilanguage")->getContextVariableValue("default", "a");
+    }
+
+    private function getPageData($page) {
+
+        $result = \dibi::query("SELECT title, tpl FROM [:prefix:page] WHERE name = %s", $page);
+        globals::addArrayToRegistry($result->fetch(), $this->pageRegistry);
+
     }
 }

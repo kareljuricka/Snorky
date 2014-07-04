@@ -15,5 +15,16 @@
 namespace Snorky;
 
 class Templater {
-    //put your code here
+
+	public function __construct() {
+		//$parser = new Parser();
+		
+	}
+
+	public function getPluginTemplateData($pluginName) {
+		$result = \dibi::query("SELECT tpl_dir, cache_dir FROM [:prefix:plugin_template] WHERE name = %s", $pluginName);
+		return $result->fetchSingle();
+
+	}
+
 }

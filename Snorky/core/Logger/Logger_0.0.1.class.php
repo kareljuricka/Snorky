@@ -18,7 +18,7 @@ class Logger {
         3 => "I_INFO"
     );
 
-	private $instanceRegister = null;
+	private $instanceRegistry = null;
 
 	private $logfile = null;
     
@@ -27,7 +27,7 @@ class Logger {
     	$this->logFile = $logFile;
 
     	// Init register of instance
-    	$this->instanceRegister = Register::getRegistr("instance");
+    	$this->instanceRegistry = Registry::getRegistry("instance");
     }
 
     /**
@@ -39,7 +39,7 @@ class Logger {
      */
     public function putLog($logNumber, $logMessage, $loggedFile, $logLine) {
 
-    	$dir = $this->instanceRegister->get("configurator")->getDir();
+    	$dir = $this->instanceRegistry->get("configurator")->getDir();
 
         $date =  date("[Y-m-d h:i:s]",time());
         $client_ip = "[".$_SERVER['REMOTE_ADDR']."]";
