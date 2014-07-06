@@ -44,7 +44,6 @@ class Scanner {
         "/^(\{)/" => "T_PARAM_START",
         "/^(\})/" => "T_PARAM_END",
         "/^(,)/" => "T_COMMA",
-        "/^(\s+)/" => "T_WHITESPACE",
         "/^((?:\"|\')(?:[a-zA-Z]|_)[a-zA-Z0-9]*(?:\"|\')/" => "T_VAL",
         "/^(true)/" => "T_TRUE",
         "/^(false)/" => "T_FALSE",
