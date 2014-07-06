@@ -17,8 +17,11 @@ class Parser {
     protected $Register = null;
     protected $Multilanguage = null;
     
-    protected $template = "";
-    protected $code = null;
+    protected $registerInstance = null;
+    protected $registerPluginInstance =null;
+    protected $template = null;
+    protected $cacheFile = null;
+    protected $code = "";
     protected static $pluginsStack = array(); // variable for checking cyclical calling plugins    
     protected $codeOk = true;
     protected $errorMessage = '';
@@ -29,16 +32,18 @@ class Parser {
 
     protected $cache = false; 
     
-    private $pluginChecked = array(); // array for skipping already checked plugins
+    protected $pluginChecked = array(); // array for skipping already checked plugins
     
-    public function __construct($file) {
-        $this->code="echo\"";
+    public function __construct($file,$cacheFile) {
+        $this->code=" echo\"";
         $this->template = $file;
-        
+        $this->cacheFile = $cacheFile;
         $this->Lexer = new Scanner($file);
         $this->Error = Error::getInstance(); // singleton
         $this->Register = Register::getRegistry("variables"); 
-        $this->Multilanguage = Register::getRegistry("multilanguage");
+        $this->registerInstance = Register::getRegistry("instance");
+        $this->registerPluginInstance = Register::getRegistry("PluginInstance");
+        $this->Multilanguage = $this->registerInstance->get("multilanguage");
        
     }
     
@@ -70,6 +75,9 @@ class Parser {
                 $run = false;
             }
         } 
+        
+        
+        
     } 
     
     
@@ -100,6 +108,9 @@ class Parser {
                             
             case "T_VAR_CONTEXT":   $this->equation .= '$this->Multilanguage->getContextVariableValue('.$this->template.','.$token['match'].')';
                                     $this->signParse();
+                                    break;
+                                
+            case "T_NAME":          $this->T_PLUGIN();
                                     break;
                                 
             default:    throw new Exception("Unexpected token \"{$token['match']}\" on line: {$this->Lexer->getRow()}",4 );
@@ -173,7 +184,46 @@ class Parser {
         }
     }
     
-    
+    protected function T_PLUGIN(){
+        try {
+            $token = $this->Lexer->getToken(FALSE);
+        } 
+        catch (LexError $ex){
+                $this->recoverToKey();
+                $this->errorMessage.="Lexical error on line: {$this->lexer->getRow()}\r\n";
+                $this->codeOk = false;
+        }
+        catch (EndOfFile $ex) {
+            throw new Exception("Unexpected end of file.",4 );
+        
+        }
+        
+        if($token['token']!== T_IS){
+             throw new Exception("Unexpected token \"{$token['match']}\", it should be \"=\".",4 );
+        }
+        
+        try {
+            $token = $this->Lexer->getToken(FALSE);
+        } 
+        catch (LexError $ex){
+                $this->recoverToKey();
+                $this->errorMessage.="Lexical error on line: {$this->lexer->getRow()}\r\n";
+                $this->codeOk = false;
+        }
+        catch (EndOfFile $ex) {
+            throw new Exception("Unexpected end of file.",4 );
+        
+        }
+        
+        if($token['token']!== T_VAL){
+             throw new Exception("Unexpected token \"{$token['match']}\", it should be some string.",4 );
+        }
+        
+        $name = $token['match'];
+        
+    }
+
+
     public static function calcString($mathString){
        
             $mathString = trim($mathString);     // trim white spaces
