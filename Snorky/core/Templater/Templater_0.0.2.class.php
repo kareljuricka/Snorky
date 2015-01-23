@@ -19,26 +19,24 @@ class Templater{
      * 
      * 
      */
-    protected $InstanceRegister = null;
-    private $CFG = null;
+    private $InstanceRegister = null;
+    protected $templateFrame = null;
+   
      /**
       * This constructor is used in classic way when templater is called from core function.
       */
     public function __construct($page) {
         // creating new register for holding objects
-        $this->InstanceRegister = new InstanceRegister();
-        $this->CFG = Configurator::Instance();
+        $this->InstanceRegister = InstanceRegister::Instance();               
+      
         
-        if($this->CFG == null){
-            //todo: eception throw
-        }
-        
-        $result = new Parser($page);
+        $parser = new Parser();
+        $result = $parser->Run($page);
         // adding necessary code need for plugin to work 
         $code = $this->templaterFrame.$result;
         
-        //creating cahce file for current page template
-        if (!file_put_contents ($this->CFG->GetCacheDir()->$page."_cache_".time().",php",$code)){
+        //creating cache file for current page template
+        if (!file_put_contents ($this->CFG->GetCacheDir()->$page."_cache_".time().".php",$code)){
             //todo: exception throw 
         }
     }
