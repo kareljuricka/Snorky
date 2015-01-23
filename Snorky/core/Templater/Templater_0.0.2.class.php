@@ -17,6 +17,7 @@ class Templater{
     /**
      * Register for holding instance for objects created and registered in anz plugin or page code for current page template.
      * 
+     * 
      */
     protected $InstanceRegister = null;
     private $CFG = null;
