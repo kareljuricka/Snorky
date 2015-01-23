@@ -14,6 +14,7 @@
  */
 class Parser{
     //put your code here
+    
     private $replacement = null;
     
     public function __construct() {
