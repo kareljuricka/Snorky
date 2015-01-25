@@ -12,6 +12,7 @@ namespace Snorky;
 class InstanceRegister{
     private static $instance = null;
     private $register = null;
+    private $scope = "global";
     
     /**
      * Public function for getting register.
@@ -29,20 +30,29 @@ class InstanceRegister{
      * @param object $value - object to register 
      * @param string $name - name for accesing object in array
      * @param string $access - define constrains for accesing object. Public everybody can get this object, Proteceted - only same class
+     * @param bool $override - specification if is possible to override entry if exists one with same name dafult value is true which
+     *  means no lock  
      * and chlidren, Private only spedified class. This value is case insensitive.
      */
-    public function RegisterObject($value, $name, $access= "public"){
+    public function RegisterObject($value, $name, $access= "public", $override = true){
         //for getting class name of object which called this method. It is used to constrain access.
         $trace = debug_backtrace();
-
+        
+        //check if exist this name in register is possible to override it
+        $element = $this->register[$this->scope][$name];
+        if($element != null && $element["Override"] == false){
+            //todo: throw exception
+        }
+        
         $pole = array(
             "Value" => $value,
             "Key" => $name,
             "Owner" => $trace[1]['class'],
             "Access" => strtolower($access),
+            "Override" => $override
         );
         
-        $this->register[$name] = $pole;        
+        $this->register[$this->scope][$name] = $pole;        
     }
     
     
@@ -83,9 +93,22 @@ class InstanceRegister{
             } 
         }      
         
-        //Caller which want to get this object is not to allowed to get it
+        //Caller whoo wants to get this object is not allowed to get it
         // todo: throw Exception
         
     }
+    
+    /**
+     * Setting scope in which will be registered instances.
+     * @param string $scope
+     */
+    public function SetScope($scope){$this->scope = $scope;}
+    /**
+     * Getting actually set scope.
+     * @return string $scope
+     */
+    public function GetScope(){return $this->scope;}
+    
+    
     
 }

@@ -66,7 +66,36 @@ class Configurator {
 		return Configurator::$dir .  "/" . Configurator::$config->Template->Dir;
 	}
 
-	public static function getTemplate($templateName) {
-		return $this->getTemplateDir() . "/" . $templateName . "." . $this->config->Template->Extension;
+	public static function GetTemplate($templateName) {
+            //todo: uninitilaized exception
+		return Configurator::getTemplateDir() . "/" . $templateName . "." .Configurator::$config->Template->Extension;
 	}
+        
+        public static function GetTemplatePhp($templateName){
+            
+        }
+
+
+        public static function GetPluginDir($plugin){
+            
+        }
+        
+        public static function GetPluginExt(){
+            
+        }
+        
+        public static function GetPluginCacheDir($plugin){
+            
+        }
+        public static function GetPluginPhp($plugin){
+            
+        }
+        
+        public static function GetPluginTemplate($plugin){
+            
+        }
+        
+        public static function GetPluginCacheExt(){
+            
+        }
 }

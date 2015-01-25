@@ -26,10 +26,17 @@ class Scanner{
         "/^({:)/" => "T_OPEN",
         "/^(:})/" => "T_CLOSE",
         "/^(plugin)/" => "PLUGIN",
-        "/^(name)/" => "T_NAME",
-        "/^(cacheable)/" => "CACHEABLE",
-        "/^(params)/" => "T_PARAMS",
+        "/^(\$\w+)/" => "VARIABLE",
+        "/^(\[(?:[0-9]+|\"\w+\")\])/" => "ARRAY_INDEX",
         "/^(=)/" => "T_IS",
+        "/^([a-zA-Z_][a-zA-Z0-9_]*)/" => "IDENTIFIER",
+        "/^(method)/" => "PLUGIN",
+        "/^(cacheable)/" => "CACHEABLE",
+        // \((((?:\".+\"|-?[0-9]+(\.[0-9]+)*)s*\,s*)*(?:\".+\"|-?[0-9]+(\.[0-9]+)*))?\)
+        "/^(name)/" => "T_NAME",
+    
+        "/^(params)/" => "T_PARAMS",
+        
         "/^(\+)/" => "T_PLUS",
         "/^(\.)/" => "T_CONCAT",
         "/^(\/)/" => "T_DIV",
