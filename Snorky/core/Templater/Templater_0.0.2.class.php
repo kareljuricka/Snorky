@@ -28,7 +28,7 @@ class Templater{
     public function __construct($page) {
         // creating new register for holding objects
         $this->InstanceRegister = InstanceRegister::Instance();               
-      
+        $this->templateFrame ="require_once(\"{Configurator::Autoloader()}\")";
         
         $parser = new Parser();
         $result = $parser->Run($page);
@@ -36,7 +36,7 @@ class Templater{
         $code = $this->templaterFrame.$result;
         
         //creating cache file for current page template
-        if (!file_put_contents ($this->CFG->GetCacheDir()->$page."_cache_".time().".php",$code)){
+        if (!file_put_contents (Configurator::GetTemplateCacheDir()."/$page._cache_".time().".php",$code)){
             //todo: exception throw 
         }
     }

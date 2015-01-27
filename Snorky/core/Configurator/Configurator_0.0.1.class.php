@@ -58,6 +58,11 @@ class Configurator {
 	public function getDatabasePrefix() {
 		return $this->config->Database->Prefix;
 	}
+        
+        public function Autoloader(){
+            
+        }
+        
 
 	public static function GetTemplateDir() {
                 if(Configurator::$dir == null || Configurator::$config == null){
@@ -74,7 +79,10 @@ class Configurator {
         public static function GetTemplatePhp($templateName){
             
         }
-
+        
+        public static function GetTemplateCacheDir(){
+            
+        }
 
         public static function GetPluginDir($plugin){
             
