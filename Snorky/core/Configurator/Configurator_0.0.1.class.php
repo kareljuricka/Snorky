@@ -98,4 +98,8 @@ class Configurator {
         public static function GetPluginCacheExt(){
             
         }
+        
+        public static function GetNamespace(){
+            
+        }
 }

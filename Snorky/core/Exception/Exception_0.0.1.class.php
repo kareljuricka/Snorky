@@ -31,7 +31,12 @@ class Exception extends \Exception {
 /**************************************************
  *  Scanner exceptions
  **************************************************/
-class EndOfFile extends Exception{
+
+class ScannerEX extends Exception{
+    
+}
+
+class EndOfFile extends ScannerEX{
     protected $_field;
     public function __construct($message="", $code=0 , Exception $previous=NULL, $field = NULL)
     {
@@ -43,6 +48,20 @@ class EndOfFile extends Exception{
         return $this->_field;
     }
 }
+
+class EndOfMethod extends ScannerEX{
+    protected $_field;
+    public function __construct($message="", $code=0 , Exception $previous=NULL, $field = NULL)
+    {
+        $this->_field = $field;
+        parent::__construct($message, $code, $previous);
+    }
+    public function getField()
+    {
+        return $this->_field;
+    }
+}
+
 
 
 class LexError extends Exception{
