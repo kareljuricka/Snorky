@@ -12,7 +12,7 @@
 
 namespace Snorky;
 
-class Configurator {
+abstract class Configurator {
 
 	private static $config = null;
 
@@ -20,11 +20,11 @@ class Configurator {
 
 	public static function SetConfigurator($dir, $configFile) {
             Configurator::$dir = $dir;
-            Configurator::$config = Configurator::loadConfig($configFile);
+            Configurator::$config = self::loadConfig($configFile);
 	}
 
 	private static function loadConfig($configFile) {
-		return simplexml_load_file(Configurator::$dir . "/" . $configFile);
+		return simplexml_load_file(self::$dir . "/" . $configFile);
 	}
 
 	public function getDir() {
@@ -43,71 +43,75 @@ class Configurator {
 		return $dbData;
 	}
 
-	public function getAdminDatabaseData() {
-		$dbData["driver"] = $this->config->Database->Driver;
-		$dbData["database"] = $this->config->Database->Database;
-		$dbData["server"] = $this->config->Database->Server;
-		$dbData["charset"] = $this->config->Database->Charset;
-		$dbData["prefix"] = $this->config->Database->Prefix;
-		$dbData["login"] = $this->config->Database->Admin->Login;
-		$dbData["password"] = $this->config->Database->Admin->Password;
+	public static function getAdminDatabaseData() {
+		$dbData["driver"] = self::$config->Database->Driver;
+		$dbData["database"] = self::$config->Database->Database;
+		$dbData["server"] = self::$config->Database->Server;
+		$dbData["charset"] = self::$config->Database->Charset;
+		$dbData["prefix"] = self::$config->Database->Prefix;
+		$dbData["login"] = self::$config->Database->Admin->Login;
+		$dbData["password"] = self::$config->Database->Admin->Password;
 
 		return $dbData;
 	}
 
 	public function getDatabasePrefix() {
-		return $this->config->Database->Prefix;
+		return self::$config->Database->Prefix;
 	}
         
-        public function Autoloader(){
+    public function Autoloader(){
             
-        }
+    }
         
-
 	public static function GetTemplateDir() {
-                if(Configurator::$dir == null || Configurator::$config == null){
-                    //todo: throw uninitialized exception
-                }
-		return Configurator::$dir .  "/" . Configurator::$config->Template->Dir;
+        if(Configurator::$dir == null || Configurator::$config == null){
+        	//todo: throw uninitialized exception
+        }
+		return self::$dir .  "/" . self::$config->Template->Dir;
 	}
 
 	public static function GetTemplate($templateName) {
             //todo: uninitilaized exception
-		return Configurator::getTemplateDir() . "/" . $templateName . "." .Configurator::$config->Template->Extension;
+		return self::getTemplateDir() . "/" . $templateName . "." . self::$config->Template->Extension;
 	}
         
-        public static function GetTemplatePhp($templateName){
-            
-        }
+   	public static function GetTemplatePhp($templateName) {
+        return self::getTemplatePhpDir() . "/" . $templateName . ".class.php";   
+	}
         
-        public static function GetTemplateCacheDir(){
-            
-        }
+	public static function GetTemplateCacheDir(){
+     	return self::$config->Template->CacheDir;       
+	}
 
-        public static function GetPluginDir($plugin){
-            
-        }
+	public static function getPluginsDir() {
+		return self::$config->Plugin->Dir;
+	}
+
+    public static function GetPluginDir($plugin){
+        return self::getPluginsDir() . "/" . $plugin . "/";
+    }
         
-        public static function GetPluginExt(){
-            
-        }
+   	public static function GetPluginExt(){
+   		return self::$config->Plugin->Ext;
+    }
         
-        public static function GetPluginCacheDir($plugin){
-            
-        }
-        public static function GetPluginPhp($plugin){
-            
-        }
+    public static function GetPluginCacheDir($plugin){
+     	return self::$config->Plugin->CacheDir . "/" . $plugin . "/";      
+    }
+    
+    public static function GetPluginPhp($plugin){
+        return self::getPluginDir($plugin) . "/" . $plugin . ".class.php";
+    }
         
-        public static function GetPluginTemplate($plugin){
-            
-        }
+    public static function GetPluginTemplate($plugin){
+    	return self::getPluginDir($plugin) . "/" . $plugin . "." . self::GetPluginExt();       
+    }
         
-        public static function GetPluginCacheExt(){
-            
-        }
+    public static function GetPluginCacheExt(){
+     	return self::$config->plugin->CacheExt;       
+	}
         
-        public static function GetNamespace(){
-            
-        }
+    public static function GetNamespace(){
+    	return self::$config->General->Namespace;        
+	}
 }
