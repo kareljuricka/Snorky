@@ -67,7 +67,14 @@ abstract class Configurator {
         if(Configurator::$dir == null || Configurator::$config == null){
         	//todo: throw uninitialized exception
         }
-		return self::$dir .  "/" . self::$config->Template->Dir;
+		return self::$dir .  "/" . self::$config->Template->TplDir;
+	}
+
+	public static function getTemplatePhpDir() {
+        if(Configurator::$dir == null || Configurator::$config == null){
+        	//todo: throw uninitialized exception
+        }
+		return self::$dir .  "/" . self::$config->Template->PhpDir;
 	}
 
 	public static function GetTemplate($templateName) {
@@ -76,15 +83,15 @@ abstract class Configurator {
 	}
         
    	public static function GetTemplatePhp($templateName) {
-        return self::getTemplatePhpDir() . "/" . $templateName . ".class.php";   
+        return self::getTemplatePhpDir() . "/" . $templateName . ".php";   
 	}
         
 	public static function GetTemplateCacheDir(){
-     	return self::$config->Template->CacheDir;       
+     	return self::$dir .  "/" . self::$config->Template->CacheDir;       
 	}
 
 	public static function getPluginsDir() {
-		return self::$config->Plugin->Dir;
+		return self::$dir .  "/" . self::$config->Plugin->Dir;
 	}
 
     public static function GetPluginDir($plugin){
@@ -100,7 +107,7 @@ abstract class Configurator {
     }
     
     public static function GetPluginPhp($plugin){
-        return self::getPluginDir($plugin) . "/" . $plugin . ".class.php";
+        return self::getPluginDir($plugin) . "/" . $plugin . ".php";
     }
         
     public static function GetPluginTemplate($plugin){
