@@ -11,6 +11,8 @@
  *
  * @author David & Karel
  */
+namespace Snorky;
+
 class Plugin {
     protected $replacementRegister = null;
     

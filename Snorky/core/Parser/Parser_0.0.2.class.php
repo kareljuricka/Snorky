@@ -24,12 +24,13 @@ class Parser {
     private $scanner = null;
     private $plugin = null; // name of plugin
     private $method = null; //name of method
-    private $finalCacheCode = "";
+    private $finalCacheCode = "<?php ";
+    private $scope = "";
     private $hasPhpFile = true;
     protected static $pluginStack = null;
     
     public function __construct($plugin =null,$method=null) {
-        $this->replacement = new ReplacementRegister();
+       // $this->replacement = new \ReplacementRegister();
         $this->scanner = new Scanner();
         $this->plugin = $plugin;
         $this->method = $method;
@@ -55,7 +56,7 @@ class Parser {
         //setting replacement register for curent scope which is defined by plugin name or global keyword for template, this setting is only for cache, in parser it doesn't affect anything
         if($this->plugin!=null){$scope = crc32($this->plugin);}
         else {$scope ="global";}
-                
+        $this->scope = $scope;      
         $this->finalCacheCode .=" RR::SetScope(\"$scope\"); ?>";
         
         /* loading php script for page into string and adding it to cache code, plugin code is obtained by require_once in template file, php script is optional */
@@ -73,15 +74,20 @@ class Parser {
         
         } 
         
+         
         try{
             while(true){
                $this->finalCacheCode.= $this->parseTemplate(); 
             }
-        } catch (EndOfFile $ex) {}
-        
-        
+        } catch (EndOfFile $ex) {
+            $this->finalCacheCode.= $ex->getField();
+        }
+        echo "final code: <br>";
+        echo $this->finalCacheCode."<br>";
        //returning one level up, is need to remove current name from plugin stack which of course is last element in stack
-       array_pop(self::$pluginStack);
+       if(self::$pluginStack != null){
+           array_pop(self::$pluginStack);
+       }
        return $this->finalCacheCode;
     }
     
@@ -93,10 +99,11 @@ class Parser {
      */
     private function initializePlugins(){
         $minicode = "";
-        
+        echo  "<br>Plugin init: <br>";
         try{
             
-             $instances = InstanceRegister::Instance();
+            $instances = InstanceRegister::Instance();
+            
             while(true){
                 //get start token
                 $this->scanner->GetToken();
@@ -111,32 +118,37 @@ class Parser {
                 }
                 
                 $token = $this->scanner->GetToken(false);
-                if($token['type'] != "IDENTIFIER "){
+                if($token['type'] != "IDENTIFIER"){
                     throw new SyntaxError('Missing plugin identifier after "=" keyword, on line: '.$this->scanner->GetRowNumber()." file: {$instances->GetScope()}");
                 }
                 
                 //call plugin constructor and register newly created object
                 $obj = new $token["value"]();
                 $instances->RegisterObject($obj,$token["value"],"public",false);
+                $objName = $token["value"];
                 
                 //check if plugin is cacheable, if this is true we don't need generate code for creating this plugin
                 $token = $this->scanner->GetToken(false);
                 if($token['type'] != "CACHEABLE"){
                     //adding creation of this object to minicode syntax
-                    $minicode .= "\$obj = new {$token["value"]}();\$instances->RegisterObject(\$obj,{$token["value"]},\"public\",false);";
+                    $minicode .= "\$obj = new $objName();\$instances->RegisterObject(\$obj,\"$objName\",\"public\",false);";
                 }
             }
         }
-        catch (ScannerEX $ex){return $minicode;}
+        catch (ScannerEX $ex){
+            $this->scanner->rewindSource();
+            return $minicode;            
+        }
     }
     
     private function parseTemplate(){
         $code = "";
         $instances = InstanceRegister::Instance();
+       
+        $startToken = $this->scanner->GetToken();       
         
-        $startToken = $this->scanner->GetToken();
         $code .=$startToken["value"];
-            
+        echo "Parse template:<br>"; 
         try{
             $token = $this->scanner->GetToken(false);
                 
@@ -146,7 +158,7 @@ class Parser {
                 case "PLUGIN":  $code.= $this->plugin();
                                 break;
                 case "T_CLOSE": break;
-                default: {throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->getRow()} file: \"$tplFile\"");}
+                default: {throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
             }
         }
         catch (EndOfFile $ex){
@@ -155,7 +167,7 @@ class Parser {
         
         catch (EndOfMethod $ex){
             $tplFile = Configurator::GetTemplate($instances->GetScope());
-            throw new SyntaxError("Unexpected end of method on line: {$this->scanner->getRow()} in: \"$tplFile\"");}
+            throw new SyntaxError("Unexpected end of method on line: {$this->scanner->GetRowNumber()} in: \"$tplFile\"");}
             
         return $code;
     }
@@ -167,7 +179,7 @@ class Parser {
      */
     public function variable($varTemplateName){
         
-        $code = "<?php \$pom=\\RR::Get(\"$templateName\");";
+        $code = "<?php \$pom=\\RR::Get(\"$varTemplateName\");";
         
        //geting indexes to array if it was in template as array with index
         $arrayIndexes ="";
@@ -176,7 +188,7 @@ class Parser {
                 $token = $this->scanner->GetToken(false);
                 if($token["type"]== "T_CLOSE") {break;}
                 elseif($token["type"] == "ARRAY_INDEX" ){$arrayIndexes.=$token["value"];}
-                else {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\" or array index after \"$templateName\", row:{$this->scanner->getRow()} file: \"$tplFile\"");}                
+                else {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\" or array index after \"$templateName\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}                
             }            
             catch (EndOfFile $ex){throw new SyntaxError("Unexpected end of file in: \"$tplFile\"");}
         }
@@ -202,27 +214,30 @@ class Parser {
         /* {: plugin=PLUGIN_NAME [method=METHOD(args)] [cacheable] :}*/
         //=
         $token = $this->scanner->GetToken(false);        
-        if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"plugin\", row:{$this->scanner->getRow()} file: \"$tplFile\"");} 
+        if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"plugin\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
         
         //PLUGIN_NAME
         $token = $this->scanner->GetToken(false); 
-        if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting plugin name, row:{$this->scanner->getRow()} file: \"$tplFile\"");} 
+        if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting plugin name, row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
         else {$pluginName =  $token["value"];} 
       
-        if(in_array($pluginName, self::$pluginStack)){throw new SemanticError("Cyclical plugin calling row:{$this->scanner->getRow()} file: \"$tplFile\"");}
+        if(self::$pluginStack!=null && in_array($pluginName, self::$pluginStack)){throw new SemanticError("Cyclical plugin calling row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
        
         //method | chaceable | :}
         $token = $this->scanner->GetToken(false);
+        $close = false; //if closing tag has already been loaded
         switch ($token['type']){
-            case "T_CLOSE": break;
+            case "T_CLOSE": 
+                $close = true;
+                break;
             case "CACHEABLE":   $cacheable = true;
                                 break;
             //method=methodName(args)
             case "METHOD":  $token = $this->scanner->GetToken(false);
-                            if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"method\", row:{$this->scanner->getRow()} file: \"$tplFile\"");}
+                            if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"method\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
                 
                             $token = $this->scanner->GetToken(false); 
-                            if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting method name, row:{$this->scanner->getRow()} file: \"$tplFile\"");} 
+                            if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting method name, row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
                 
                             $methodName = $token['value'];
                             $method = $methodName;
@@ -233,25 +248,40 @@ class Parser {
                             }
                 
                             break;
-            default:    {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\", \"cacheable\" or \"method\" row:{$this->scanner->getRow()} file: \"$tplFile\"");}  
+            default:    {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\", \"cacheable\" or \"method\" row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}  
            }
         
         $namespace = Configurator::GetNamespace();
         $pluginCall = "$namespace$pluginName->$methodName$args;";
         
-        $token = $this->scanner->GetToken(false);
-        if ($token['type']== "CACHEABLE"){
-            $cacheable = true;
+        if(!$close){
             $token = $this->scanner->GetToken(false);
-        }
        
-        if ($token['type']!= "CACHEABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\", row:{$this->scanner->getRow()} file: \"$tplFile\"");}
+            if ($token['type']== "CACHEABLE" && !$cacheable){
+                $cacheable = true;
+                $token = $this->scanner->GetToken(false);
+            }
+       
+            if ($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
+        }
+        
         
         //making cache file for plugin
-        $cacheFilename = Configurator::GetPluginCacheDir($pluginName).$pluginName."_".$methodName.Configurator::GetPluginCacheExt();
+        $cacheDir = Configurator::GetPluginCacheDir($pluginName);
+        $cacheFilename = $cacheDir.$pluginName."_".$methodName.Configurator::GetPluginCacheExt();
         if (!file_exists($cacheFilename) || filemtime(Configurator::GetPluginTemplate($pluginName) > filemtime($cacheFilename))){ 
-            $retCode = (new Parser($pluginName, $method))->Run($pluginName);
+            echo "Plugin Name: $pluginName<br>";
+            $newParser = new Parser($pluginName, $method);
+            $retCode = $newParser->Run($pluginName);
+            //if cache directory doesnt exist create new one
+            if (!file_exists($cacheDir)) {
+                mkdir($cacheDir, 0755, true);
+            }
             file_put_contents($cacheFilename, $retCode);            
+        }
+        //loading cahce file to string
+        else {
+            $retCode = file_get_contents($cacheFilename);
         }
         
         //making cache string for plugin call
@@ -264,7 +294,7 @@ class Parser {
             $cacheCode .= ob_get_clean();            
         }
         else{
-            $cacheCode = "<?php require_once(\"$pluginPhpCode\"); ?>$retCode";
+            $cacheCode = "<?php require_once(\"$pluginPhpCode\"); ?>$retCode <?php RR::SetScope(\"{$this->scope}\"); ?>";
         }
         
         return $cacheCode;

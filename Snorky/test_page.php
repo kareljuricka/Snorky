@@ -1,3 +1,6 @@
+<a href="/config.cfg">click</a>
+
+
 <?php
 
 /* 
@@ -17,6 +20,12 @@ $paths["classLibDir"] = "lib";
 \Snorky\Autoloader::$classCoreDir = $paths["classCoreDir"]; 
 \Snorky\Autoloader::$classLibDir = $paths["classLibDir"];
 
+/*
+echo $_SERVER['HTTP_HOST'];*/
+//simplexml_load_file($_SERVER['DOCUMENT_ROOT']."/domains/digiast.com/config.cfg");
+
+
+\Snorky\Configurator::SetConfigurator( $_SERVER['DOCUMENT_ROOT']."/domains/digiast.com", "/config.cfg");
 //zavolame templater ten udela sablonu
 
 $templater = new \Snorky\Templater("template");

@@ -24,7 +24,7 @@ abstract class Configurator {
 	}
 
 	private static function loadConfig($configFile) {
-		return simplexml_load_file(self::$dir . "/" . $configFile);
+		return simplexml_load_file(self::$dir.$configFile);
 	}
 
 	public function getDir() {
@@ -79,7 +79,8 @@ abstract class Configurator {
 
 	public static function GetTemplate($templateName) {
             //todo: uninitilaized exception
-		return self::getTemplateDir() . "/" . $templateName . "." . self::$config->Template->Extension;
+          //  echo" ext ".self::$config->Template->Ext;
+		return self::getTemplateDir() . "/" . $templateName . "." . self::$config->Template->Ext;
 	}
         
    	public static function GetTemplatePhp($templateName) {
@@ -98,8 +99,8 @@ abstract class Configurator {
         return self::getPluginsDir() . "/" . $plugin . "/";
     }
         
-   	public static function GetPluginExt(){
-   		return self::$config->Plugin->Ext;
+   public static function GetPluginExt(){
+   	return self::$config->Plugin->Ext;
     }
         
     public static function GetPluginCacheDir($plugin){
@@ -107,11 +108,11 @@ abstract class Configurator {
     }
     
     public static function GetPluginPhp($plugin){
-        return self::getPluginDir($plugin) . "/" . $plugin . ".php";
+        return self::getPluginDir($plugin) .  $plugin . ".php";
     }
         
     public static function GetPluginTemplate($plugin){
-    	return self::getPluginDir($plugin) . "/" . $plugin . "." . self::GetPluginExt();       
+    	return self::getPluginDir($plugin) . $plugin . "." . self::GetPluginExt();       
     }
         
     public static function GetPluginCacheExt(){

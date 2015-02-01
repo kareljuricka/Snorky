@@ -1,4 +1,4 @@
 <span>
-	{plugin=pltest}
+	{: plugin=Test:}
 </span>
-<h3>{$c}</h3>
+<h3>{:$c:}</h3>

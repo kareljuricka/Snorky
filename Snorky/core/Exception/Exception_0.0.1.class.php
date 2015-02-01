@@ -62,6 +62,19 @@ class EndOfMethod extends ScannerEX{
     }
 }
 
+class FileNotExist extends ScannerEX{
+    protected $_field;
+    public function __construct($message="", $code=0 , Exception $previous=NULL, $field = NULL)
+    {
+        $this->_field = $field;
+        parent::__construct($message, $code, $previous);
+    }
+    public function getField()
+    {
+        return $this->_field;
+    }
+}
+
 
 
 class LexError extends Exception{
@@ -77,7 +90,7 @@ class LexError extends Exception{
 class SyntaxError extends Exception{
     protected  $levelOfException = null;
     // Redefine the exception so message isn't optional
-    public function __construct($message, $level, $code = 0, Exception $previous = null) {
+    public function __construct($message, $level = 1, $code = 0, Exception $previous = null) {
         // make sure everything is assigned properly
         $this->levelOfException = $level;
         parent::__construct($message, $code, $previous);

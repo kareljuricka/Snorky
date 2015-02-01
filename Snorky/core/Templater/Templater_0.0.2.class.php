@@ -28,16 +28,26 @@ class Templater{
     public function __construct($page) {
         // creating new register for holding objects
         $this->InstanceRegister = InstanceRegister::Instance();               
-        $this->templateFrame ="require_once(\"{Configurator::Autoloader()}\")";
+        $this->templateFrame ="<?php require_once(\"{Configurator::Autoloader()}\") ?>";
         
-        $parser = new Parser();
-        $result = $parser->Run($page);
-        // adding necessary code need for plugin to work 
-        $code = $this->templaterFrame.$result;
+        
         
         //creating cache file for current page template
-        if (!file_put_contents (Configurator::GetTemplateCacheDir()."/$page._cache_".time().".php",$code)){
-            //todo: exception throw 
+        $cacheDir = Configurator::GetTemplateCacheDir();
+         if (!file_exists($cacheDir."/$page._cache.php") || filemtime(Configurator::GetTemplate($page) > filemtime($cacheDir."/$page._cache.php"))){ 
+             
+            $parser = new Parser();
+            $result = $parser->Run($page);
+            // adding necessary code need for plugin to work 
+            $code = $this->templaterFrame.$result;
+          
+            //if cache directory doesnt exist create new one
+            if (!file_exists($cacheDir)) {
+                mkdir($cacheDir, 0755, true);
+            }
+            file_put_contents($cacheDir."/$page._cache.php", $code);            
         }
+        
+       
     }
 }

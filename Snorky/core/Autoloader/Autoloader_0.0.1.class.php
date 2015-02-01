@@ -48,7 +48,38 @@ class Autoloader {
         }
         return false;
     }
+    /**
+     * Load execption classes cause there are multiple exceptions in one file
+     */
+    static public function exceptionLoader($className)
+    {  $classCompleteName = $className;
 
+        
+        $path = self::$baseDir . "/" . self::$classCoreDir . "/Exception";
+        $latest_version = self::getLatestVersion($path);
+        $filename = $path . "/Exception_" . $latest_version . ".class.php"; 
+        
+        if (file_exists($filename)) {
+            require_once($filename);
+            if (class_exists($classCompleteName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    static public function pluginLoader($plugin) {
+        $filename= Configurator::GetPluginPhp($plugin);
+        
+        if (file_exists($filename)) {
+            require_once($filename);
+            if (class_exists($plugin)) {
+                return true;
+            }
+        }
+        return false;
+        
+    }
     /**
      * Load lib class files
      * @param  string $className class to use
@@ -126,4 +157,5 @@ class Autoloader {
 
 // Register folders
 spl_autoload_register('\Snorky\Autoloader::coreLoader');
-//spl_autoload_register('\Snorky\Autoloader::libLoader');
+spl_autoload_register('\Snorky\Autoloader::exceptionLoader');
+spl_autoload_register('\Snorky\Autoloader::pluginLoader');
