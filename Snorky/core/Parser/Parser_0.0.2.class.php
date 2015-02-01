@@ -248,7 +248,7 @@ class Parser {
         if ($token['type']!= "CACHEABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\", row:{$this->scanner->getRow()} file: \"$tplFile\"");}
         
         //making cache file for plugin
-        $cacheFilename = Configurator::GetPluginCacheDir($pluginName).$pluginName.Configurator::GetPluginExt();
+        $cacheFilename = Configurator::GetPluginCacheDir($pluginName).$pluginName."_".$methodName.Configurator::GetPluginCacheExt();
         if (!file_exists($cacheFilename) || filemtime(Configurator::GetPluginTemplate($pluginName) > filemtime($cacheFilename))){ 
             $retCode = (new Parser($pluginName, $method))->Run($pluginName);
             file_put_contents($cacheFilename, $retCode);            

@@ -1,12 +1,12 @@
 <?php 
-class Test extends /Snorky/Plugin {
+class Test extends \Snorky\Plugin {
     
-    run(){
+    public function run(){
 		$scope = crc32("Test");
 		RR::SetScope($scope);
 		$a = "Durezo!";
 		$b = "Ahoj ";
-		$c = $b.$c
+		$c = $b.$c;
 		RR:Add("c","pozdrav");
 	}
 }
