@@ -59,11 +59,12 @@ class Parser {
         $this->scope = $scope;      
         $this->finalCacheCode .=" RR::SetScope(\"$scope\"); ?>";
         
+       
         /* loading php script for page into string and adding it to cache code, plugin code is obtained by require_once in template file, php script is optional */
         if($this->plugin == null){
             //geting php code file
-            $phpCodeFile = Configurator::GetPluginPhp($this->plugin);  
-            
+            $phpCodeFile = Configurator::GetTemplatePhp($page);  
+           
             if(file_exists($phpCodeFile)){
                 $phpCode = php_strip_whitespace($phpCodeFile);
                 $phpOpenTagRegex = "/(?:<\?php|<\?)/";
@@ -179,7 +180,7 @@ class Parser {
      */
     public function variable($varTemplateName){
         
-        $code = "<?php \$pom=\\RR::Get(\"$varTemplateName\");";
+        $code = "<?php \$pom=\\RR::Get('$varTemplateNam');";
         
        //geting indexes to array if it was in template as array with index
         $arrayIndexes ="";
