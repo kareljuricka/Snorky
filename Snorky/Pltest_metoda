@@ -1,0 +1,2 @@
+<?php  RR::SetScope("414552584"); ?>
+<div> <?php $pom=\RR::Get('');echo $pom; ?> </div>

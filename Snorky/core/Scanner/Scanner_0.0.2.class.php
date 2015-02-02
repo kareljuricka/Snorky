@@ -22,6 +22,7 @@ class Scanner{
     private $fileHandler = null;
     private $cachedString =null;    
     protected $cacheStack = null; 
+    public static $debug = false;
     
 //this array defines token fo regullar expressions
     protected static $_terminals = array(
@@ -88,13 +89,16 @@ class Scanner{
      */
     public function GetToken($newBlock = true){
         
-        
          // newBlock is true, function is looking for new block of code in template. It searchs for "{:" tag.
         if($newBlock){
             $removedString = null;
             
             do{
                 $pos = strpos($this->cachedString,"{:");
+                
+                if(preg_match(self::$_terminals['METHOD_LABEL'],$this->cachedString,$match)){
+                    throw new EndOfMethod('End of file',1,NULL, $removedString);
+                }
                 
                 // start tag wasn't found, it reads next line from source file.
                 if(!$pos){                    
@@ -117,16 +121,16 @@ class Scanner{
         $this->cachedString = preg_replace(self::$_terminals['T_WHITESPACE'], '', $this->cachedString);
         
         while(true){        
-            echo "<dd>/-/{$this->cachedString}/-/</dd>";
+            if(self::$debug){echo "<dd>/-/{$this->cachedString}/-/</dd>";}
             foreach(static::$_terminals as $pattern => $name) {
-            // echo " $pattern => $name ";
+            
                 if(preg_match($name, $this->cachedString, $matches,PREG_OFFSET_CAPTURE )) {
                     //method label EoF for me
                     if ($name == "METHOD_LABEL"){
                         throw new EndOfMethod('End of file',1,NULL, NULL);
                     }
                     
-                    echo "<dd>match: ".$matches[0][0]." type: $pattern</dd><br>";
+                    if(self::$debug){echo "<dd>match: ".$matches[0][0]." type: $pattern</dd><br>";}
                     //removing matched token from code string
                     $this->cachedString = substr($this->cachedString, $matches[0][1]+strlen($matches[0][0]));
                     return array('type' => $pattern, 'value' => $matches[0][0]);
@@ -148,7 +152,7 @@ class Scanner{
      */
     public function RewindToMethod($methodName){
         $this->cachedString = preg_replace(self::$_terminals['T_WHITESPACE'], '', $this->cachedString);       
-        
+       
         while(true){        
             
             if(preg_match("/^({{\s*$methodName\s}}\s*\n)/", $this->cachedString, $matches,PREG_OFFSET_CAPTURE )){
@@ -182,7 +186,20 @@ class Scanner{
         $escape = false;
                 
         while(true){
-            //remove excess whitespaces
+           
+            if(self::$debug){
+                echo "<b>e:</b> ";
+                echo $escape ? 'true' : 'false';
+                echo "<b> c: </b>" ;
+                echo $comma ? 'true' : 'false';
+                echo "<b> a: </b>" ;
+                echo $apostrof ? 'true' : 'false';
+                echo "<b> qu: </b>" ;
+                echo $quotaion ? 'true' : 'false';
+                echo "<b> znak: </b>".$this->cachedString[$stringIndex]."<br>";
+            }
+            
+             //remove excess whitespaces
             if(!($apostrof || $quotaion)){ $this->cachedString = preg_replace(self::$_terminals['T_WHITESPACE'], '', $this->cachedString);}
             if($this->cachedString ==""){
                 if(!($this->cachedString = fgets($this->fileHandler))){
@@ -200,7 +217,7 @@ class Scanner{
             else if($this->cachedString[$stringIndex] == ')' && !($quotaion || $apostrof)){
                 // we finish reading function arguments
                 if(--$start == 0 ){
-                    $args .= $this->$this->cachedString[$stringIndex++];
+                    $args .= $this->cachedString[$stringIndex++];
                     break;
                 }                
             }
@@ -210,7 +227,7 @@ class Scanner{
             //escape
             else if($this->cachedString[$stringIndex] == "\\" && !$escape){$escape = true;}
             // two consecutive commas  - ,, 
-            else if($comma && (!$quotaion || !$apostrof)){throw new SyntaxError("Missing argument row:{$this->scanner->GetRowNumber()}");}
+            else if($this->cachedString[$stringIndex] == "," && $comma && (!$quotaion || !$apostrof)){  throw new SyntaxError("Missing argument row:{$this->GetRowNumber()}");}
             else if($this->cachedString[$stringIndex] == ',' && !($quotaion || $apostrof)) {$comma=true; }
             //nulling escape and doma
             else {
@@ -218,7 +235,7 @@ class Scanner{
                 $escape = false;                
             }
                         
-            $args .= $this->$this->cachedString[$stringIndex++];
+            $args .= $this->cachedString[$stringIndex++];
             
         }
     
@@ -228,6 +245,8 @@ class Scanner{
     }
     
     public function  rewindSource(){
+        $this->cachedString ="";
+        $this->rowNumber = 0;
         fseek($this->fileHandler, $this->filePointerPosition);
     }
 }

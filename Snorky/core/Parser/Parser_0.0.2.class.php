@@ -24,7 +24,7 @@ class Parser {
     private $scanner = null;
     private $plugin = null; // name of plugin
     private $method = null; //name of method
-    private $finalCacheCode = "<?php ";
+    private $finalCacheCode = "<?php \$instances = \\Snorky\\InstanceRegister::Instance();";
     private $scope = "";
     private $hasPhpFile = true;
     protected static $pluginStack = null;
@@ -34,6 +34,7 @@ class Parser {
         $this->scanner = new Scanner();
         $this->plugin = $plugin;
         $this->method = $method;
+        
     }
     
     /**
@@ -82,9 +83,11 @@ class Parser {
             }
         } catch (EndOfFile $ex) {
             $this->finalCacheCode.= $ex->getField();
+        } catch (EndOfMethod $ex){
+            $this->finalCacheCode.= $ex->getField();
         }
-        echo "final code: <br>";
-        echo $this->finalCacheCode."<br>";
+        
+        
        //returning one level up, is need to remove current name from plugin stack which of course is last element in stack
        if(self::$pluginStack != null){
            array_pop(self::$pluginStack);
@@ -100,7 +103,7 @@ class Parser {
      */
     private function initializePlugins(){
         $minicode = "";
-        echo  "<br>Plugin init: <br>";
+        
         try{
             
             $instances = InstanceRegister::Instance();
@@ -145,11 +148,10 @@ class Parser {
     private function parseTemplate(){
         $code = "";
         $instances = InstanceRegister::Instance();
-       
+        
         $startToken = $this->scanner->GetToken();       
         
-        $code .=$startToken["value"];
-        echo "Parse template:<br>"; 
+        $code .=$startToken["value"]; 
         try{
             $token = $this->scanner->GetToken(false);
                 
@@ -252,8 +254,8 @@ class Parser {
             default:    {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\", \"cacheable\" or \"method\" row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}  
            }
         
-        $namespace = Configurator::GetNamespace();
-        $pluginCall = "$namespace$pluginName->$methodName$args;";
+       // $namespace = Configurator::GetNamespace();
+        $pluginCall = "\$obj = \$instances->GetObject('$pluginName'); \$obj->$methodName$args;";
         
         if(!$close){
             $token = $this->scanner->GetToken(false);
@@ -271,7 +273,7 @@ class Parser {
         $cacheDir = Configurator::GetPluginCacheDir($pluginName);
         $cacheFilename = $cacheDir.$pluginName."_".$methodName.Configurator::GetPluginCacheExt();
         if (!file_exists($cacheFilename) || filemtime(Configurator::GetPluginTemplate($pluginName) > filemtime($cacheFilename))){ 
-            echo "Plugin Name: $pluginName<br>";
+           
             $newParser = new Parser($pluginName, $method);
             $retCode = $newParser->Run($pluginName);
             //if cache directory doesnt exist create new one
@@ -295,7 +297,7 @@ class Parser {
             $cacheCode .= ob_get_clean();            
         }
         else{
-            $cacheCode = "<?php require_once(\"$pluginPhpCode\"); ?>$retCode <?php RR::SetScope(\"{$this->scope}\"); ?>";
+            $cacheCode = "<?php require_once(\"$pluginPhpCode\"); $pluginCall?>$retCode <?php RR::SetScope(\"{$this->scope}\"); ?>";
         }
         
         return $cacheCode;
