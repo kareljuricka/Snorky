@@ -29,7 +29,16 @@ class Templater{
         // creating new register for holding objects
         $this->InstanceRegister = InstanceRegister::Instance();               
         $this->templateFrame ="<?php require_once(\"{Configurator::Autoloader()}\") ?>";
-        
+         
+        /**********************************************/
+        //  autoloader kod, jestli nebude stranka spoustena samostatne je to zbytecne pridavat do sablony 
+        //autoloadaer
+        $this->templateFrame= "<?php require_once '".$_SERVER['DOCUMENT_ROOT']."/domains/digiast.com/core/Autoloader/Autoloader_0.0.1.class.php';";
+        $this->templateFrame.= '\Snorky\Autoloader::$baseDir = \''.$_SERVER['DOCUMENT_ROOT']."/domains/digiast.com';";
+        $this->templateFrame.= '\Snorky\Autoloader::$classCoreDir = "core";';
+        $this->templateFrame.= '\Snorky\Autoloader::$classLibDir = "lib"; ?>';
+
+        /**********************************************/
         
         
         //creating cache file for current page template
@@ -39,7 +48,7 @@ class Templater{
             $parser = new Parser();
             $result = $parser->Run($page);
             // adding necessary code need for plugin to work 
-            $code = $this->templaterFrame.$result;
+            $code = $this->templateFrame.$result;
           
             //if cache directory doesnt exist create new one
             if (!file_exists($cacheDir)) {

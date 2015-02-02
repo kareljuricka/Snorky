@@ -21,17 +21,13 @@ class RR {
      * @param string $phpName 
      * @param string $templateName - if it isn't specified method will use same value as phpName is
      */
-    public static function Add($phpName, $templateName = "defaut"){
-        
-        //if we want same name for phpName and templateName we can call this method without specified teplateName, then is neccessary replace placeholder "default" with correct value  
-        if($templateName == "default"){$templateName = $phpName;}
+    public static function Add($value, $templateName){
         
         //because you can store variables which shouldnt have dollar sign at begining, it is neccessary to do some normalization, here it means if is dollar at begining - remove it!
         if($templateName[0] == "$"){$templateName = substr($templateName, 1);}
-        if($phpName[0] == "$"){$templateNa = substr($templateName, 1);}
-        
+        //echo "rr: ".self::$scope." $templateName $value";
         //finaly store data in register        
-        self::$replacementRegister[self::$scope][$templateName] = $phpName;
+        self::$replacementRegister[self::$scope][$templateName] = $value;
             
     }
     
@@ -40,7 +36,10 @@ class RR {
      * @param string $templateName key to replacement register
      * @return string name of variable
      */
-    public static function Get($templateName){           
+    public static function Get($templateName){ 
+         //because you can store variables which shouldnt have dollar sign at begining, it is neccessary to do some normalization, here it means if is dollar at begining - remove it!
+        if($templateName[0] == "$"){$templateName = substr($templateName, 1);}
+        
         return  self::$replacementRegister[self::$scope][$templateName];
     }
     

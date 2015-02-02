@@ -135,7 +135,8 @@ class Parser {
                 $token = $this->scanner->GetToken(false);
                 if($token['type'] != "CACHEABLE"){
                     //adding creation of this object to minicode syntax
-                    $minicode .= "\$obj = new $objName();\$instances->RegisterObject(\$obj,\"$objName\",\"public\",false);";
+                    $pluginPhpCode = Configurator::GetPluginPhp($objName);
+                    $minicode .= "require_once(\"$pluginPhpCode\"); \$obj = new $objName();\$instances->RegisterObject(\$obj,\"$objName\",\"public\",false);";
                 }
             }
         }
@@ -182,7 +183,7 @@ class Parser {
      */
     public function variable($varTemplateName){
         
-        $code = "<?php \$pom=\\RR::Get('$varTemplateNam');";
+        $code = "<?php \$pom=\\RR::Get('$varTemplateName');";
         
        //geting indexes to array if it was in template as array with index
         $arrayIndexes ="";

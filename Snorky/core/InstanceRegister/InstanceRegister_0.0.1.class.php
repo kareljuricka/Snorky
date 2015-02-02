@@ -51,7 +51,6 @@ class InstanceRegister{
             "Access" => strtolower($access),
             "Override" => $override
         );
-        
         $this->register[$this->scope][$name] = $pole;        
     }
     
@@ -63,9 +62,8 @@ class InstanceRegister{
      * @throws Exception if access constrains diassalowes to get this or if elemetnt in array doesn't exists
      */  
     public function GetObject($name){
-        
         //object with metainfo from register
-        $element = $this->register[$name];
+        $element = $this->register[$this->scope][$name];
         if ($element == null){
             //todo: throw not exist error
         }
@@ -73,7 +71,7 @@ class InstanceRegister{
         /* Check if access policy allow to return this object and if it is possible then return object*/        
         //everybody can get this object
         if ($element["Access"] =="public"){
-            return $element["Values"];
+            return $element["Value"];
         }      
         
         // owner of this element is same class as the one which want to access it now. This also fits to private access
@@ -89,7 +87,7 @@ class InstanceRegister{
             $parrents = class_parents($whoWants);
             
             if(in_array($element, $parrents)){
-               return $element["Values"]; 
+               return $element["Value"]; 
             } 
         }      
         

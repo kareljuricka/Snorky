@@ -1,5 +1,5 @@
 {{ metoda }}
 
-<div> {: $c:} </div>
+<div> {: $help:} </div>
 {{ run }}
-<span> {: $help:} </span>
+<span> {: $c:} </span>

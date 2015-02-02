@@ -6,7 +6,7 @@ class Test extends \Snorky\Plugin {
 		RR::SetScope($scope);
 		$a = "Durezo!";
 		$b = "Ahoj ";
-		$c = $b.$c;
-		RR:Add("c","pozdrav");
+		$c = $a.$b;
+		RR::Add($c,"pozdrav"); 
 	}
 }
