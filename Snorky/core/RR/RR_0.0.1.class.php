@@ -22,12 +22,21 @@ class RR {
      * @param string $templateName - if it isn't specified method will use same value as phpName is
      */
     public static function Add($value, $templateName){
+        $trace = debug_backtrace();
+        $callName = $trace[1]['class'];
+        
+        if($callName != ""){
+            $scope = crc32($callName);
+        }
+        else{
+            $scope = "global";
+        }
         
         //because you can store variables which shouldnt have dollar sign at begining, it is neccessary to do some normalization, here it means if is dollar at begining - remove it!
         if($templateName[0] == "$"){$templateName = substr($templateName, 1);}
         //echo "rr: ".self::$scope." $templateName $value";
         //finaly store data in register        
-        self::$replacementRegister[self::$scope][$templateName] = $value;
+        self::$replacementRegister[$scope][$templateName] = $value;
             
     }
     

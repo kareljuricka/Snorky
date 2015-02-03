@@ -1,4 +1,4 @@
 <?php 
-RR::SetScope("global");
+//RR::SetScope("global");
 $c=5;
 RR::Add($c,"c");
