@@ -29,6 +29,8 @@ class Parser {
     private $hasPhpFile = true;
     protected static $pluginStack = null;
     
+    private static $debug =  true;
+    
     public function __construct($plugin =null,$method=null) {
        // $this->replacement = new \ReplacementRegister();
         $this->scanner = new Scanner();
@@ -273,7 +275,7 @@ class Parser {
         //making cache file for plugin
         $cacheDir = Configurator::GetPluginCacheDir($pluginName);
         $cacheFilename = $cacheDir.$pluginName."_".$methodName.Configurator::GetPluginCacheExt();
-        if (!file_exists($cacheFilename) || filemtime(Configurator::GetPluginTemplate($pluginName) > filemtime($cacheFilename))){ 
+        if (self::$debug || (!file_exists($cacheFilename) || filemtime(Configurator::GetPluginTemplate($pluginName) > filemtime($cacheFilename)))){ 
            
             $newParser = new Parser($pluginName, $method);
             $retCode = $newParser->Run($pluginName);

@@ -21,6 +21,7 @@ class Templater{
      */
     private $InstanceRegister = null;
     protected $templateFrame = null;
+    private static $debug = true;
    
      /**
       * This constructor is used in classic way when templater is called from core function.
@@ -42,8 +43,10 @@ class Templater{
         
         
         //creating cache file for current page template
+        
+        
         $cacheDir = Configurator::GetTemplateCacheDir();
-         if (!file_exists($cacheDir."/$page._cache.php") || filemtime(Configurator::GetTemplate($page) > filemtime($cacheDir."/$page._cache.php"))){ 
+         if (self::$debug || (!file_exists($cacheDir."/$page._cache.php") || filemtime(Configurator::GetTemplate($page) > filemtime($cacheDir."/$page._cache.php")))){ 
              
             $parser = new Parser();
             $result = $parser->Run($page);
