@@ -22,7 +22,7 @@ class Scanner{
     private $fileHandler = null;
     private $cachedString =null;    
     protected $cacheStack = null; 
-    public static $debug = false;
+    public static $debug = true;
     
 //this array defines token fo regullar expressions
     protected static $_terminals = array(
@@ -37,6 +37,10 @@ class Scanner{
         // \((((?:\".+\"|-?[0-9]+(\.[0-9]+)*)s*\,s*)*(?:\".+\"|-?[0-9]+(\.[0-9]+)*))?\)
         "T_NAME" => "/^(name)/",
         "T_PARAMS" => "/^(params)/",
+        "FOREACH" => " /^(foreach)/",
+        "AS" => "/^(as)/",
+        "ASSIGN" => '/^(=>)/',
+        "BLOCK_END" => "/^(block_end)/",
         "IDENTIFIER" => "/^([a-zA-Z_][a-zA-Z0-9_]*)/",
         "METHOD_LABEL" => "/^({{\s*[a-zA-Z_][a-zA-Z0-9_]*\s}}\s*\n)/",        
         "ARRAY_INDEX" => "/^(\[(?:[0-9]+|\"\w+\")\])/",        

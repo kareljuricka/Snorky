@@ -27,6 +27,7 @@ class Parser {
     private $finalCacheCode = "<?php \$instances = \\Snorky\\InstanceRegister::Instance();";
     private $scope = "";
     private $hasPhpFile = true;
+    private static $varCounter = 0;
     protected static $pluginStack = null;
     
     private static $debug =  true;
@@ -54,6 +55,7 @@ class Parser {
         //rewinding template fiel to method if it was specified
         if($this->method != null){$this->scanner->RewindToMethod($this->method);}
         
+        if(self::$debug){echo "Plugin Init: <br>";}
         $this->finalCacheCode.= $this->initializePlugins();
         
         //setting replacement register for curent scope which is defined by plugin name or global keyword for template, this setting is only for cache, in parser it doesn't affect anything
@@ -78,7 +80,7 @@ class Parser {
         
         } 
         
-         
+        if(self::$debug){echo "Template parse: <br>";} 
         try{
             while(true){
                $this->finalCacheCode.= $this->parseTemplate(); 
@@ -148,7 +150,7 @@ class Parser {
         }
     }
     
-    private function parseTemplate(){
+    private function parseTemplate($block = false){
         $code = "";
         $instances = InstanceRegister::Instance();
         
@@ -159,12 +161,27 @@ class Parser {
             $token = $this->scanner->GetToken(false);
                 
             switch ($token["type"]){
-                case "VARIABLE":    $code.= $this->variable($token["value"]);
-                                    break;
-                case "PLUGIN":  $code.= $this->plugin();
-                                break;
-                case "T_CLOSE": break;
-                default: {throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
+                case "VARIABLE":    
+                    $code.= $this->variable($token["value"]);
+                    break;
+                case "PLUGIN":  
+                    $code.= $this->plugin();
+                    break;
+                case "FOREACH": 
+                    $code.= $this->foreach_m();
+                    break;
+                case "BLOCK_END":
+                    if(!$block){
+                        throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");
+                    }
+                    $token = $this->scanner->GetToken(false);
+                    if($token['type'] !="T_CLOSE") {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\",  after \"block_end\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
+                    else{throw new EndOfBlock();}
+                    break;
+                case "T_CLOSE": 
+                    break;
+                default: 
+                    throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");
             }
         }
         catch (EndOfFile $ex){
@@ -320,10 +337,72 @@ class Parser {
         ob_end_clean();
         
         return $contents;
+    } 
+    /**
+     * Method translate Snorky syntax foreach into php foreach. 
+     * @return string
+     * @throws SyntaxError
+     */
+    private function foreach_m(){
+        // {: foreach $array as [$key => ] $row :}
+        //              .
+        //              .
+        //              .
+        //          {: end :}
+        
+      
+        //$array
+        $token = $this->scanner->GetToken(false);        
+        if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"arrray name\" after \"foreach\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+        $array = $token['value'];
+        $_array = "array"."_".self::$varCounter++."_".floor(microtime(true));
+        
+        //as
+        $token = $this->scanner->GetToken(false);        
+        if($token['type']!= "AS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"as\" after \"arrray name\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
+
+        
+        //$row
+        $token = $this->scanner->GetToken(false);        
+        if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"variable name\" after \"as\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+        $row = $token['value'];
+        $_row = "row"."_".self::$varCounter++."_".floor(microtime(true));
+        
+        $token = $this->scanner->GetToken(false);    
+        
+        // =>, previsouly loaded $row isn't row but $key
+        if($token['type'] == "ASSIGN"){
+            $key = $row;
+            $_key = $_row;
+            
+            $token = $this->scanner->GetToken(false);        
+            if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"variable name\" after \"=>\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+            
+            $partCode = " $_key => ";
+            $partCode2 = " \\RR::Add(\$$_key,'$key');";
+            $row = $token['value'];
+            $_row = "row"."_".self::$varCounter++."_".floor(microtime(true));
+            
+            $token = $this->scanner->GetToken(false);
+            if($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\"  after \"=>\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+        }
+        else{
+            if($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\" or \"=>\" after \"identifier\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+        }
+                
+        $iterator = "iterator"."_".self::$varCounter++."_".floor(microtime(true));
+        
+        
+        $code = "<?php \$$_array = \\RR::Get('$array'); \$$iterator = new \\Snorky\\Iterator(); foreach($$_array as $partCode \$$_row) {";
+        $code .= " \\RR::Add(\$$_row,'\$row'); $partCode2 ?>";
+        while(true){
+            try{
+                $code .= $this->parseTemplate(true);
+            } catch (EndOfBlock $ex) {break;}
+        }
+       
+        
+        $code .= "<?php } ?>";
+        return $code;        
     }
-
-
-   
-    
-    
 }

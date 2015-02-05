@@ -87,10 +87,27 @@ class LexError extends Exception{
 /**************************************************
  *  Parser exceptions
  **************************************************/
-class SyntaxError extends Exception{
+class ParserEX extends Exception{
+    
+}
+class SyntaxError extends ParserEX{
     protected  $levelOfException = null;
     // Redefine the exception so message isn't optional
     public function __construct($message, $level = 1, $code = 0, Exception $previous = null) {
+        // make sure everything is assigned properly
+        $this->levelOfException = $level;
+        parent::__construct($message, $code, $previous);
+    }
+    
+    public function GetExceptionLevel(){
+        return $this->levelOfException;
+    }
+}
+
+class EndOfBlock extends ParserEX{
+    protected  $levelOfException = null;
+    
+    public function __construct($message="", $level = 10, $code = 0, Exception $previous = null) {
         // make sure everything is assigned properly
         $this->levelOfException = $level;
         parent::__construct($message, $code, $previous);
