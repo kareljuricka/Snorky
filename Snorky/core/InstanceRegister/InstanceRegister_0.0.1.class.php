@@ -34,12 +34,18 @@ class InstanceRegister{
      *  means no lock  
      * and chlidren, Private only spedified class. This value is case insensitive.
      */
-    public function RegisterObject($value, $name, $access= "public", $override = true){
+    public function RegisterObject($value, $name, $access= "public", $override = true, $scope = null){
         //for getting class name of object which called this method. It is used to constrain access.
         $trace = debug_backtrace();
         
+        if($scope == null){
+            $scope = $trace[1]['class'];
+            if($scope == null || $scope =""){
+                $scope = "global";
+            } 
+        }
         //check if exist this name in register is possible to override it
-        $element = $this->register[$this->scope][$name];
+        $element = $this->register[$scope][$name];
         if($element != null && $element["Override"] == false){
             //todo: throw exception
         }
@@ -51,7 +57,7 @@ class InstanceRegister{
             "Access" => strtolower($access),
             "Override" => $override
         );
-        $this->register[$this->scope][$name] = $pole;        
+        $this->register[$scope][$name] = $pole;        
     }
     
     
@@ -61,9 +67,17 @@ class InstanceRegister{
      * @return object
      * @throws Exception if access constrains diassalowes to get this or if elemetnt in array doesn't exists
      */  
-    public function GetObject($name){
+    public function GetObject($name, $scope = null){
         //object with metainfo from register
-        $element = $this->register[$this->scope][$name];
+        $trace = debug_backtrace();
+        
+        if($scope == null){
+            $scope = $trace[1]['class'];
+            if($scope == null || $scope =""){
+                $scope = "global";
+            } 
+        }
+        $element = $this->register[$scope][$name];
         if ($element == null){
             //todo: throw not exist error
         }
@@ -75,7 +89,6 @@ class InstanceRegister{
         }      
         
         // owner of this element is same class as the one which want to access it now. This also fits to private access
-        $trace = debug_backtrace();
         $whoWants = $trace[1]['class'];
         
         if ($whoWants == $element["Owner"]){

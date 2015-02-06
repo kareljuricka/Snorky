@@ -106,6 +106,26 @@ class SyntaxError extends ParserEX{
 
 class EndOfBlock extends ParserEX{
     protected  $levelOfException = null;
+    protected $_field;
+    
+    public function __construct($message="",$field = NULL,  $level = 10, $code = 0, Exception $previous = null) {
+        // make sure everything is assigned properly
+        $this->_field = $field;
+        $this->levelOfException = $level;
+        parent::__construct($message, $code, $previous);
+    }
+    
+    public function GetExceptionLevel(){
+        return $this->levelOfException;
+    }
+    
+    public function GetField(){
+        return $this->_field;
+    }
+}
+
+class SemanticError extends ParserEX{
+    protected  $levelOfException = null;
     
     public function __construct($message="", $level = 10, $code = 0, Exception $previous = null) {
         // make sure everything is assigned properly

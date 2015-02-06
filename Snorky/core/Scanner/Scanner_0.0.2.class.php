@@ -39,8 +39,18 @@ class Scanner{
         "T_PARAMS" => "/^(params)/",
         "FOREACH" => " /^(foreach)/",
         "AS" => "/^(as)/",
+        "LABEL" => "/^(label)/",
+        "FIRST" => "/^(first)/",
+        "LAST" => "/^(last)/",
+        "EVEN" => "/^(even)/",
+        "ODD" => "/^(odd)/",
+        "ITERATOR" => "/^(iterator)/",
+        "ITERATION" => "/^(iteration)/",
         "ASSIGN" => '/^(=>)/',
         "BLOCK_END" => "/^(block_end)/",
+        "LITERAL" => "/^(literal)/",
+        "LITERAL_END" => "/{:\s*literal_end\s*:}/",
+        "POSITIVE_NUMBER" => "/^([1-9][0-9]*)/",
         "IDENTIFIER" => "/^([a-zA-Z_][a-zA-Z0-9_]*)/",
         "METHOD_LABEL" => "/^({{\s*[a-zA-Z_][a-zA-Z0-9_]*\s}}\s*\n)/",        
         "ARRAY_INDEX" => "/^(\[(?:[0-9]+|\"\w+\")\])/",        
@@ -105,15 +115,16 @@ class Scanner{
                 }
                 
                 // start tag wasn't found, it reads next line from source file.
-                if(!$pos){                    
+                if($pos === false){                    
                     $removedString.= $this->cachedString;
-                    
+                   
                     if(!($this->cachedString = fgets($this->fileHandler))){
                         throw new EndOfFile('End of file',1,NULL, $removedString);
                     }
                     $this->rowNumber++;
                 }
-            }while(!$pos);
+                
+            }while($pos === false);
             
             $removedString.= substr($this->cachedString, 0,$pos);
             $this->cachedString = substr($this->cachedString, $pos + 2);
@@ -252,5 +263,34 @@ class Scanner{
         $this->cachedString ="";
         $this->rowNumber = 0;
         fseek($this->fileHandler, $this->filePointerPosition);
+    }
+    
+    /**
+     * Reads every character until it finds {: literal_end :}, read characters are retuned as string
+     * @return string
+     * @throws EndOfFile
+     */
+    public function LiteralRead(){
+        $code = "";
+        
+        while(true){        
+            
+            if(preg_match(self::$_terminals["LITERAL_END"], $this->cachedString, $matches,PREG_OFFSET_CAPTURE )){
+                $code.= substr($this->cachedString,0, $matches[0][1]);
+                $this->cachedString = substr($this->cachedString, $matches[0][1]+strlen($matches[0][0]));
+                
+                return $code;
+            }
+            //There is no token in our cached string, so we load new line
+            else{
+                $code .= $this->cachedString;
+                
+                if(!($this->cachedString = fgets($this->fileHandler))){
+                    throw new EndOfFile('End of file',1,NULL, "");
+                }
+                $this->rowNumber++;
+            }
+            
+        }
     }
 }

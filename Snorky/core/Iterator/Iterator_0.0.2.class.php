@@ -15,9 +15,11 @@ namespace Snorky;
 
 class Iterator {
     private $counter = 0;
+    private $arrayLength = 0;
     
-    public function __construct() {
+    public function __construct($arrayLength) {
         $this->counter = 0;
+        $this->arrayLength =  $arrayLength;
     }
     
     /**
@@ -39,8 +41,8 @@ class Iterator {
      * @param array $array
      * @return boolean
      */
-    public function isLast($array){        
-        return (sizeof($array) - 1) == $this->counter ? true : false;       
+    public function isLast(){        
+        return ($this->arrayLength - 1) == $this->counter ? true : false;       
     }
     /**
      * Returns counter value starting from 1.
@@ -66,6 +68,15 @@ class Iterator {
     public function isEven(){
         //iteration is  <1;n> counter <0;(n-1)>
         return $this->counter % 2 == 0? true :false;
+    }
+    
+    /**
+     * Returns true for every iteration which is multiple for param number 
+     * @param int $numb
+     */
+    public function iteration($numb){
+        //iteration is  <1;n> counter <0;(n-1)>
+        return ($this->counter +1) % $numb == 0 ? true : false;        
     }
             
 }

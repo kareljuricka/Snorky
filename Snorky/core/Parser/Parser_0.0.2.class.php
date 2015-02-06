@@ -20,7 +20,8 @@ namespace Snorky;
 class Parser {
     //put your code here
     
-    private $replacement = null;
+    private $curTplFileName = null;
+    private $currIterator = null;
     private $scanner = null;
     private $plugin = null; // name of plugin
     private $method = null; //name of method
@@ -46,6 +47,8 @@ class Parser {
      * @return string cache code for givven template
      */
     public function Run($page){
+        
+        $this->curTplFileName = $page;
         
         if($this->plugin == null){$this->scanner->SetFile(Configurator::GetTemplate($page));}
         else {$this->scanner->SetFile(Configurator::GetPluginTemplate($page));}
@@ -113,34 +116,67 @@ class Parser {
             $instances = InstanceRegister::Instance();
             
             while(true){
+                $cacheable = false;
                 //get start token
                 $this->scanner->GetToken();
                 
                 /* finding plugins */
                 $token = $this->scanner->GetToken(false);
+                
+                //skipping literal
+                if($token['type'] == "LITERAL"){
+                    $token = $this->scanner->GetToken(false);
+                    if($token['type'] != "T_CLOSE"){
+                        throw new SyntaxError('Missing ":}" after "literal" keyword, on line: '.$this->scanner->GetRowNumber()." file: {$this->curTplFileName}");
+                    }
+                    
+                   $this->scanner->LiteralRead();
+                }
                 if($token['type'] != "PLUGIN"){continue;}
                 
                 $token = $this->scanner->GetToken(false);
                 if($token['type'] != "T_IS"){
-                    throw new SyntaxError('Missing "=" after "plugin" keyword, on line: '.$this->scanner->GetRowNumber()." file: {$instances->GetScope()}");
+                    throw new SyntaxError('Missing "=" after "plugin" keyword, on line: '.$this->scanner->GetRowNumber()." file: {$this->curTplFileName}");
                 }
                 
                 $token = $this->scanner->GetToken(false);
                 if($token['type'] != "IDENTIFIER"){
-                    throw new SyntaxError('Missing plugin identifier after "=" keyword, on line: '.$this->scanner->GetRowNumber()." file: {$instances->GetScope()}");
+                    throw new SyntaxError('Missing plugin identifier after "=" keyword, on line: '.$this->scanner->GetRowNumber()." file: {$this->curTplFileName}");
                 }
                 
-                //call plugin constructor and register newly created object
-                $obj = new $token["value"]();
-                $instances->RegisterObject($obj,$token["value"],"public",false);
-                $objName = $token["value"];
                 
-                //check if plugin is cacheable, if this is true we don't need generate code for creating this plugin
-                $token = $this->scanner->GetToken(false);
-                if($token['type'] != "CACHEABLE"){
+                //call plugin constructor
+                $objName = $token["value"];
+                $obj = new $objName();                
+                $registrationName  = $objName;
+                
+                do {
+                    $token = $this->scanner->GetToken(false);                    
+                    if($token['type'] == "CACHEABLE"){ $cacheable = true;}
+                    if($token['type'] == "LABEL"){
+                        
+                        $token = $this->scanner->GetToken(false);
+                        if($token['type'] != "T_IS"){
+                            throw new SyntaxError('Missing "=" after "label" keyword, on line: '.$this->scanner->GetRowNumber()." file: {$this->curTplFileName}");
+                        }
+                
+                        $token = $this->scanner->GetToken(false);
+                        if($token['type'] != "IDENTIFIER"){
+                            throw new SyntaxError('Missing label identifier after "=" keyword, on line: '.$this->scanner->GetRowNumber()." file: {$this->curTplFileName}");
+                        }
+                        
+                        $registrationName  = $token["value"]; 
+                    }
+                    
+                }while($token["type"] != "T_CLOSE");
+                
+                $instances->RegisterObject($obj,$registrationName,"public",false);
+                
+                // code is generated only if plugin isn't marked as cacheable
+                if(!$cacheable){
                     //adding creation of this object to minicode syntax
                     $pluginPhpCode = Configurator::GetPluginPhp($objName);
-                    $minicode .= "require_once(\"$pluginPhpCode\"); \$obj = new $objName();\$instances->RegisterObject(\$obj,\"$objName\",\"public\",false);";
+                    $minicode .= "require_once(\"$pluginPhpCode\"); \$obj = new $objName();\$instances->RegisterObject(\$obj,\"$registrationName\",\"public\",false);";
                 }
             }
         }
@@ -159,7 +195,7 @@ class Parser {
         $code .=$startToken["value"]; 
         try{
             $token = $this->scanner->GetToken(false);
-                
+            
             switch ($token["type"]){
                 case "VARIABLE":    
                     $code.= $this->variable($token["value"]);
@@ -172,16 +208,46 @@ class Parser {
                     break;
                 case "BLOCK_END":
                     if(!$block){
-                        throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");
+                        throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");
                     }
                     $token = $this->scanner->GetToken(false);
-                    if($token['type'] !="T_CLOSE") {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\",  after \"block_end\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
-                    else{throw new EndOfBlock();}
+                    if($token['type'] !="T_CLOSE") {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\",  after \"block_end\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+                    else{throw new EndOfBlock("", $code);}
+                    break;
+                case "FIRST":
+                    $code.= $this->first();
+                    break;
+                case "LAST":
+                    $code .= $this->last();
+                    break;
+                case "EVEN":
+                    $code .= $this->even();
+                    break;
+                case "ODD":
+                    $code .= $this->odd();
+                    break;
+                case "ITERATION":
+                    $code.= $this->iteration();
+                    break;
+                case "ITERATOR":
+                    if($this->currIterator == null){
+                        throw new SyntaxError("\"iterator\" can only be used in loops, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");
+                    }
+                    $token = $this->scanner->GetToken(false);
+                    
+                    if($token['type'] !="T_CLOSE") {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\",  after \"block_end\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+                    else{$code .= "<?php echo \${$this->currIterator}->getCounter(); ?>";}
+                    break;
+                case "LITERAL":
+                    $token = $this->scanner->GetToken(false);                    
+                    if($token['type'] !="T_CLOSE") {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\",  after \"literal\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+                    
+                    $code .= $this->scanner->LiteralRead();
                     break;
                 case "T_CLOSE": 
                     break;
                 default: 
-                    throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");
+                    throw new SyntaxError("Unexpected token \"{$token['value']}\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");
             }
         }
         catch (EndOfFile $ex){
@@ -190,7 +256,7 @@ class Parser {
         
         catch (EndOfMethod $ex){
             $tplFile = Configurator::GetTemplate($instances->GetScope());
-            throw new SyntaxError("Unexpected end of method on line: {$this->scanner->GetRowNumber()} in: \"$tplFile\"");}
+            throw new SyntaxError("Unexpected end of method on line: {$this->scanner->GetRowNumber()} in: \"{$this->curTplFileName}\"");}
             
         return $code;
     }
@@ -211,9 +277,9 @@ class Parser {
                 $token = $this->scanner->GetToken(false);
                 if($token["type"]== "T_CLOSE") {break;}
                 elseif($token["type"] == "ARRAY_INDEX" ){$arrayIndexes.=$token["value"];}
-                else {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\" or array index after \"$templateName\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}                
+                else {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\" or array index after \"$templateName\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}                
             }            
-            catch (EndOfFile $ex){throw new SyntaxError("Unexpected end of file in: \"$tplFile\"");}
+            catch (EndOfFile $ex){throw new SyntaxError("Unexpected end of file in: \"{$this->curTplFileName}\"");}
         }
         
         
@@ -234,60 +300,69 @@ class Parser {
         $methodName = "run"; //default plugin method, which is called if method isn't specified
         $args = "()"; // default args
         $method = null;
-        /* {: plugin=PLUGIN_NAME [method=METHOD(args)] [cacheable] :}*/
+        
+        /* {: plugin=PLUGIN_NAME [method=METHOD(args)] [label=label_Name][cacheable] :}*/
         //=
         $token = $this->scanner->GetToken(false);        
-        if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"plugin\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+        if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"plugin\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
         
         //PLUGIN_NAME
         $token = $this->scanner->GetToken(false); 
-        if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting plugin name, row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+        if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting plugin name, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
         else {$pluginName =  $token["value"];} 
       
-        if(self::$pluginStack!=null && in_array($pluginName, self::$pluginStack)){throw new SemanticError("Cyclical plugin calling row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
+        if(self::$pluginStack!=null && in_array($pluginName, self::$pluginStack)){throw new SemanticError("Cyclical plugin calling row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
        
-        //method | chaceable | :}
-        $token = $this->scanner->GetToken(false);
-        $close = false; //if closing tag has already been loaded
-        switch ($token['type']){
-            case "T_CLOSE": 
-                $close = true;
-                break;
-            case "CACHEABLE":   $cacheable = true;
-                                break;
-            //method=methodName(args)
-            case "METHOD":  $token = $this->scanner->GetToken(false);
-                            if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"method\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
-                
-                            $token = $this->scanner->GetToken(false); 
-                            if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting method name, row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
-                
-                            $methodName = $token['value'];
-                            $method = $methodName;
-                            try{$args = $this->scanner->GetMethodArgs();} 
-                            catch (SyntaxError $ex) {
-                                $msg = $ex->getMessage();
-                                throw new SyntaxError("$msg file: \"$tplFile\"");
-                            }
-                
-                            break;
-            default:    {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\", \"cacheable\" or \"method\" row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}  
-           }
+        //method | label | cacheable | :}
+        $token = $this->scanner->GetToken(false); 
         
-       // $namespace = Configurator::GetNamespace();
-        $pluginCall = "\$obj = \$instances->GetObject('$pluginName'); \$obj->$methodName$args;";
         
-        if(!$close){
+        if($token['type'] == "METHOD"){
+            
             $token = $this->scanner->GetToken(false);
-       
-            if ($token['type']== "CACHEABLE" && !$cacheable){
-                $cacheable = true;
-                $token = $this->scanner->GetToken(false);
+            if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"method\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+            
+            $token = $this->scanner->GetToken(false); 
+            if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting method name, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
+                
+            $methodName = $token['value'];
+            $method = $methodName;
+            
+            try{$args = $this->scanner->GetMethodArgs();} 
+            catch (SyntaxError $ex) {
+                $msg = $ex->getMessage();
+                throw new SyntaxError("$msg file: \"{$this->curTplFileName}\"");
             }
-       
-            if ($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
+            
+            $token = $this->scanner->GetToken(false); 
         }
         
+        // label | cacheable | :}       
+        if($token['type'] == "LABEL"){
+            
+            $token = $this->scanner->GetToken(false);
+            if($token['type']!= "T_IS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"label\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+            
+            $token = $this->scanner->GetToken(false);
+            if($token['type']!= "IDENTIFIER"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting label name, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
+            else {$labelName =  $token["value"];} 
+            
+            $token = $this->scanner->GetToken(false); 
+        }
+        else{$labelName = null;}
+        
+        // cacheable | :}
+        if($token['type'] == "CACHEABLE"){
+            $cacheable = true;            
+            $token = $this->scanner->GetToken(false); 
+        }
+        
+        // :}
+        if ($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":\}\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+               
+        
+       // $namespace = Configurator::GetNamespace();;
+        $pluginCall = "\$obj = \$instances->GetObject('".($labelName == null ? $pluginName: $labelName)."'); \$obj->$methodName$args;";
         
         //making cache file for plugin
         $cacheDir = Configurator::GetPluginCacheDir($pluginName);
@@ -353,18 +428,18 @@ class Parser {
       
         //$array
         $token = $this->scanner->GetToken(false);        
-        if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"arrray name\" after \"foreach\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+        if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"arrray name\" after \"foreach\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
         $array = $token['value'];
         $_array = "array"."_".self::$varCounter++."_".floor(microtime(true));
         
         //as
         $token = $this->scanner->GetToken(false);        
-        if($token['type']!= "AS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"as\" after \"arrray name\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");}
+        if($token['type']!= "AS"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"as\" after \"arrray name\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
 
         
         //$row
         $token = $this->scanner->GetToken(false);        
-        if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"variable name\" after \"as\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+        if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"variable name\" after \"as\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
         $row = $token['value'];
         $_row = "row"."_".self::$varCounter++."_".floor(microtime(true));
         
@@ -376,7 +451,7 @@ class Parser {
             $_key = $_row;
             
             $token = $this->scanner->GetToken(false);        
-            if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"variable name\" after \"=>\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+            if($token['type']!= "VARIABLE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"variable name\" after \"=>\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
             
             $partCode = " $_key => ";
             $partCode2 = " \\RR::Add(\$$_key,'$key');";
@@ -384,25 +459,141 @@ class Parser {
             $_row = "row"."_".self::$varCounter++."_".floor(microtime(true));
             
             $token = $this->scanner->GetToken(false);
-            if($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\"  after \"=>\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+            if($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\"  after \"=>\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
         }
         else{
-            if($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\" or \"=>\" after \"identifier\", row:{$this->scanner->GetRowNumber()} file: \"$tplFile\"");} 
+            if($token['type']!= "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\" or \"=>\" after \"identifier\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
         }
-                
+         
+        
         $iterator = "iterator"."_".self::$varCounter++."_".floor(microtime(true));
+        $prevIterator = $this->currIterator;
+        $this->currIterator = $iterator;
         
-        
-        $code = "<?php \$$_array = \\RR::Get('$array'); \$$iterator = new \\Snorky\\Iterator(); foreach($$_array as $partCode \$$_row) {";
+        $code = "<?php \$$_array = \\RR::Get('$array'); \$$iterator = new \\Snorky\\Iterator(count(\$$_array)); foreach($$_array as $partCode \$$_row) {";
         $code .= " \\RR::Add(\$$_row,'\$row'); $partCode2 ?>";
         while(true){
             try{
                 $code .= $this->parseTemplate(true);
-            } catch (EndOfBlock $ex) {break;}
+            } catch (EndOfBlock $ex) {$code.= $ex->GetField(); break;}
         }
        
+        $this->currIterator = $prevIterator;
+        $code .= "<?php  \$".$iterator."->inc(); }?>";
+        return $code;        
+    }
+    
+    /*
+     * Method for parsing {: first :} ... {: block_end :}
+     */
+    private function first(){
+        echo " <br>";
+        $token = $this->scanner->GetToken(false);
+        if($token['type'] != "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\" after \"first\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
+        
+        if($this->currIterator == null){throw new SemanticError ("\first\" block can only be used in loop block, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+        
+        $code = "<?php if(\${$this->currIterator}->isFirts()) { ?>";
+        while(true){
+            try{
+                $code .= $this->parseTemplate(true);
+            } catch (EndOfBlock $ex) {$code.= $ex->GetField(); break;}
+        }
         
         $code .= "<?php } ?>";
-        return $code;        
+        return $code; 
+    }
+    /*
+     * Method for parsing {: last :} ... {: block_end :}
+     */
+    private function last(){
+        
+        $token = $this->scanner->GetToken(false);
+        if($token['type'] != "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\" after \"last\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
+        
+        if($this->currIterator == null){throw new SemanticError ("\last\" block can only be used in loop block, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+        
+        $code = "<?php if(\${$this->currIterator}->isLast()) { ?>";
+        while(true){
+            try{
+                $code .= $this->parseTemplate(true);
+            } catch (EndOfBlock $ex) {$code.= $ex->GetField(); break;}
+        }
+        
+        $code .= "<?php } ?>";
+        return $code; 
+    }
+    
+    /*
+     * Method for parsing {: even :} ... {: block_end :}
+     */
+    private function even(){
+        
+        $token = $this->scanner->GetToken(false);
+        if($token['type'] != "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\" after \"even\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
+        
+        if($this->currIterator == null){throw new SemanticError ("\even\" can only be used in loop block, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+        
+        $code = "<?php if(\${$this->currIterator}->isEven()) { ?>";
+        while(true){
+            try{
+                $code .= $this->parseTemplate(true);
+            } catch (EndOfBlock $ex) {$code.= $ex->GetField(); break;}
+        }
+        
+        $code .= "<?php } ?>";
+        return $code; 
+    }
+    
+    /*
+     * Method for parsing {: odd :} ... {: block_end :}
+     */
+    private function odd(){
+        
+        $token = $this->scanner->GetToken(false);
+        if($token['type'] != "T_CLOSE"){throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\" after \"odd\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
+        
+        if($this->currIterator == null){throw new SemanticError ("\odd\" can only be used in loop block, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+        
+        $code = "<?php if(\${$this->currIterator}->isOdd()) { ?>";
+        while(true){
+            try{
+                $code .= $this->parseTemplate(true);
+            } catch (EndOfBlock $ex) {$code.= $ex->GetField(); break;}
+        }
+        
+        $code .= "<?php } ?>";
+        return $code; 
+    }
+    
+    /*
+     * Method for parsing {: iteration=n :} ... {: block_end :}
+     */
+    private function iteration(){
+        // = n :}
+        $token =  $this->scanner->GetToken(false);
+        if($token['type'] != "T_IS") {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \"=\" after \"iteration\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
+        
+        // n :}
+        $token =  $this->scanner->GetToken(false);
+        if($token['type'] != "POSITIVE_NUMBER") {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting positive int after \"=\", row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");} 
+        $iteration = $token["value"];
+        
+        // :} 
+        $token =  $this->scanner->GetToken(false);
+        if($token['type'] != "T_CLOSE") {throw new SyntaxError("Unexpected token \"{$token['value']}\", was expecting \":}\" after positive int, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+        
+        if($this->currIterator == null){throw new SemanticError ("\iteration\" block can only be used in loop block, row:{$this->scanner->GetRowNumber()} file: \"{$this->curTplFileName}\"");}
+        
+        $code = "<?php if(\${$this->currIterator}->iteration($iteration)) { ?>";
+        while(true){
+            try{
+                $code .= $this->parseTemplate(true);
+            } catch (EndOfBlock $ex) {$code.= $ex->GetField(); break;}
+        }
+        
+        $code .= "<?php } ?>";
+        return $code; 
+        
     }
 }
